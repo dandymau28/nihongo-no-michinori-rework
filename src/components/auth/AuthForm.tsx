@@ -9,17 +9,23 @@ import { useSettings } from "@/context/SettingsContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuthShell, Field, authInputCls } from "./AuthShell";
+import { CheckEmail } from "./CheckEmail";
+
+type Pending = { email: string; reason: "signup" | "signin"; sendFailed: boolean };
 
 export function AuthForm({
   mode,
   googleEnabled,
   resetEnabled = false,
+  verificationRequired = false,
   next,
 }: {
   mode: "login" | "register";
   googleEnabled: boolean;
   /** Show "Forgot password?" (only when reset emails can actually be delivered). */
   resetEnabled?: boolean;
+  /** New email/password accounts must confirm their address before signing in. */
+  verificationRequired?: boolean;
   next: string;
 }) {
   const { t } = useSettings();
@@ -30,8 +36,10 @@ export function AuthForm({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
 
   // Already signed in (or just signed in): continue to where they were going.
   useEffect(() => {
@@ -42,16 +50,47 @@ export function AuthForm({
     en: "Something went wrong — please try again.",
     id: "Terjadi kesalahan — silakan coba lagi.",
   });
+  /** Where the confirmation link lands; it keeps `next` so the learner continues afterwards. */
+  const verifyCallback =
+    next !== "/" ? `/verify-email?next=${encodeURIComponent(next)}` : "/verify-email";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = isRegister
-      ? await authClient.signUp.email({ name: name.trim(), email: email.trim(), password })
-      : await authClient.signIn.email({ email: email.trim(), password });
+    const cleanEmail = email.trim();
+
+    if (isRegister) {
+      const res = await authClient.signUp.email({
+        name: name.trim(),
+        email: cleanEmail,
+        password,
+        callbackURL: verifyCallback,
+      });
+      setBusy(false);
+      if (res.error) {
+        setError(res.error.message || fallbackError);
+        return;
+      }
+      if (verificationRequired) {
+        setPending({ email: cleanEmail, reason: "signup", sendFailed: false });
+        return;
+      }
+      router.refresh();
+      return;
+    }
+
+    const res = await authClient.signIn.email({ email: cleanEmail, password, rememberMe });
     if (res.error) {
-      setError(res.error.message || fallbackError);
+      if (res.error.code === "EMAIL_NOT_VERIFIED") {
+        const sent = await authClient.sendVerificationEmail({
+          email: cleanEmail,
+          callbackURL: verifyCallback,
+        });
+        setPending({ email: cleanEmail, reason: "signin", sendFailed: Boolean(sent.error) });
+      } else {
+        setError(res.error.message || fallbackError);
+      }
       setBusy(false);
       return;
     }
@@ -66,6 +105,23 @@ export function AuthForm({
       setError(res.error.message || fallbackError);
       setBusy(false);
     }
+  }
+
+  if (pending) {
+    return (
+      <AuthShell title={t({ en: "Check your inbox", id: "Periksa kotak masukmu" })}>
+        <CheckEmail
+          email={pending.email}
+          reason={pending.reason}
+          sendFailed={pending.sendFailed}
+          callbackURL={verifyCallback}
+          onBack={() => {
+            setPending(null);
+            setPassword("");
+          }}
+        />
+      </AuthShell>
+    );
   }
 
   const nextQuery = next !== "/" ? `?next=${encodeURIComponent(next)}` : "";
@@ -105,6 +161,7 @@ export function AuthForm({
           {isRegister && (
             <Field label={t({ en: "Name", id: "Nama" })}>
               <input
+                id="auth-name"
                 required
                 autoComplete="name"
                 value={name}
@@ -115,6 +172,7 @@ export function AuthForm({
           )}
           <Field label={t({ en: "Email", id: "Email" })}>
             <input
+              id="auth-email"
               type="email"
               required
               autoComplete="email"
@@ -123,32 +181,61 @@ export function AuthForm({
               className={authInputCls}
             />
           </Field>
-          <div>
-            <Field label={t({ en: "Password", id: "Kata sandi" })}>
-              <input
-                type="password"
-                required
-                minLength={8}
-                autoComplete={isRegister ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={authInputCls}
-              />
-            </Field>
-            {!isRegister && resetEnabled && (
-              <Link
-                href="/forgot-password"
-                className="mt-1.5 inline-block text-xs text-muted hover:text-fg hover:underline"
-              >
-                {t({ en: "Forgot password?", id: "Lupa kata sandi?" })}
-              </Link>
-            )}
-          </div>
-          {isRegister && (
+          <Field label={t({ en: "Password", id: "Kata sandi" })}>
+            <input
+              id="auth-password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete={isRegister ? "new-password" : "current-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={authInputCls}
+            />
+          </Field>
+
+          {isRegister ? (
             <p className="text-xs text-muted">
-              {t({ en: "At least 8 characters.", id: "Minimal 8 karakter." })}
+              {verificationRequired
+                ? t({
+                    en: "At least 8 characters. We'll email you a link to confirm your address.",
+                    id: "Minimal 8 karakter. Kami akan mengirim tautan untuk mengonfirmasi emailmu.",
+                  })
+                : t({ en: "At least 8 characters.", id: "Minimal 8 karakter." })}
             </p>
+          ) : (
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="auth-remember" className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    id="auth-remember"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="size-4 accent-[var(--primary)]"
+                  />
+                  {t({ en: "Keep me signed in", id: "Biarkan tetap masuk" })}
+                </label>
+                {resetEnabled && (
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-muted hover:text-fg hover:underline"
+                  >
+                    {t({ en: "Forgot password?", id: "Lupa kata sandi?" })}
+                  </Link>
+                )}
+              </div>
+              {!rememberMe && (
+                <p className="text-xs text-muted">
+                  {t({
+                    en: "You'll be signed out when you close the browser — good for shared computers.",
+                    id: "Kamu akan keluar saat browser ditutup — cocok untuk komputer bersama.",
+                  })}
+                </p>
+              )}
+            </div>
           )}
+
           {error && (
             <p role="alert" className="text-sm text-danger">
               {error}

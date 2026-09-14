@@ -9,7 +9,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { STR } from "@/lib/strings";
 import { ButtonLink } from "@/components/ui/Button";
 
-const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
 
 export function AccountMenu() {
   const { t } = useSettings();

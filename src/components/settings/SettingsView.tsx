@@ -170,7 +170,18 @@ export function SettingsView() {
           <CardTitle>{t({ en: "Account", id: "Akun" })}</CardTitle>
           <div className="text-sm">
             <p className="font-medium">{user.name}</p>
-            <p className="text-muted">{user.email}</p>
+            <p className="flex flex-wrap items-center gap-2 text-muted">
+              {user.email}
+              {user.emailVerified ? (
+                <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success">
+                  {t({ en: "Confirmed", id: "Terkonfirmasi" })}
+                </span>
+              ) : (
+                <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">
+                  {t({ en: "Not confirmed", id: "Belum dikonfirmasi" })}
+                </span>
+              )}
+            </p>
           </div>
           <Button size="sm" variant="secondary" onClick={signOut}>
             {t({ en: "Sign out", id: "Keluar" })}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth/AuthForm";
+import { emailLinksEnabled } from "@/lib/server/emailFeatures";
 import { googleEnabled } from "@/lib/server/google";
 import { safeNext } from "@/lib/safeNext";
 
@@ -11,5 +12,12 @@ export default async function RegisterPage({
   searchParams: Promise<{ next?: string | string[] }>;
 }) {
   const { next } = await searchParams;
-  return <AuthForm mode="register" googleEnabled={googleEnabled()} next={safeNext(next)} />;
+  return (
+    <AuthForm
+      mode="register"
+      googleEnabled={googleEnabled()}
+      verificationRequired={emailLinksEnabled()}
+      next={safeNext(next)}
+    />
+  );
 }

@@ -39,3 +39,23 @@ export async function sendEmail(mail: Mail): Promise<void> {
   }
   await t.sendMail({ from: process.env.EMAIL_FROM || process.env.SMTP_USER, ...mail });
 }
+
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/** A short email whose whole point is one link. */
+export function linkEmail(opts: {
+  name: string;
+  intro: string;
+  action: string;
+  url: string;
+  outro: string;
+}): { text: string; html: string } {
+  return {
+    text: `Hi ${opts.name},\n\n${opts.intro}\n\n${opts.action}:\n${opts.url}\n\n${opts.outro}`,
+    html:
+      `<p>Hi ${escapeHtml(opts.name)},</p>` +
+      `<p>${escapeHtml(opts.intro)}</p>` +
+      `<p><a href="${escapeHtml(opts.url)}">${escapeHtml(opts.action)}</a></p>` +
+      `<p>${escapeHtml(opts.outro)}</p>`,
+  };
+}

@@ -4,9 +4,11 @@ A JLPT **N5 → N4** study site built from a 90-day study planner — now with *
 so every learner tracks their own progress and arranges their own plan. Each lesson of
 the plan has its drills, reading, listening, or mock test **built into the site**.
 
-- **Accounts** — email + password or Google sign-in (better-auth). Anyone can browse
-  lessons, the default plan and the practice tools; **tracking requires signing in**
-  (guest scores last only until the page is left).
+- **Accounts** — email + password or Google sign-in (better-auth), with email
+  confirmation, password reset and a "Keep me signed in" option (30-day sessions, or a
+  browser-session login for shared computers). Anyone can browse lessons, the default
+  plan and the practice tools; **tracking requires signing in** (guest scores last only
+  until the page is left).
 - **Personal planner** — each learner sets a start date, their study weekdays and a pace
   (lessons per study day), and the 90 built-in lessons are laid out on their calendar.
   From there they can:
@@ -52,7 +54,7 @@ Environment variables (see `.env.example`):
 | `BETTER_AUTH_SECRET` | random secret, e.g. `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | public origin, e.g. `http://localhost:3000` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional; Google button hidden when empty. Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | optional; sends password-reset emails. While empty, reset links are printed to the server log (and "Forgot password?" is hidden in production) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | optional; sends password-reset and email-confirmation links. While empty, the links are printed to the server log; in production, password reset and email confirmation stay off until SMTP is set |
 
 Other scripts:
 

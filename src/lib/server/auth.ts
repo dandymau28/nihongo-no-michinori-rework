@@ -2,27 +2,66 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "./db";
-import { sendEmail } from "./email";
+import { linkEmail, sendEmail } from "./email";
+import { emailLinksEnabled } from "./emailFeatures";
 import { googleEnabled } from "./google";
 
-const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const DAY = 60 * 60 * 24;
+
+/** Not awaited, so response times don't reveal whether an account exists. */
+function deliver(to: string, subject: string, body: { text: string; html: string }) {
+  void sendEmail({ to, subject, ...body }).catch((err) =>
+    console.error(`[email] "${subject}" failed:`, err),
+  );
+}
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+  session: {
+    // "Keep me signed in" (ticked by default): 30 days, renewed daily while in use.
+    // Unticked, better-auth issues a browser-session cookie and a 1-day session.
+    expiresIn: 30 * DAY,
+    updateAge: DAY,
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
     autoSignIn: true,
+    // Only when confirmation emails can actually be delivered (see emailLinksEnabled),
+    // otherwise nobody could ever sign in.
+    requireEmailVerification: emailLinksEnabled(),
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
-      // Not awaited, so response time doesn't reveal whether the account exists.
-      void sendEmail({
-        to: user.email,
-        subject: "Reset your Nihongo No Michinori password",
-        text: `Hi ${user.name},\n\nSomeone (hopefully you) asked to reset the password for your Nihongo No Michinori account. Open this link to choose a new one — it expires in 1 hour:\n\n${url}\n\nIf you didn't ask for this, you can ignore this email.`,
-        html: `<p>Hi ${escapeHtml(user.name)},</p><p>Someone (hopefully you) asked to reset the password for your Nihongo No Michinori account. The link expires in 1 hour.</p><p><a href="${escapeHtml(url)}">Choose a new password</a></p><p>If you didn't ask for this, you can ignore this email.</p>`,
-      }).catch((err) => console.error("[email] reset password email failed:", err));
+      deliver(
+        user.email,
+        "Reset your Nihongo No Michinori password",
+        linkEmail({
+          name: user.name,
+          intro:
+            "Someone (hopefully you) asked to reset the password for your Nihongo No Michinori account. The link works for 1 hour.",
+          action: "Choose a new password",
+          url,
+          outro: "If you didn't ask for this, you can ignore this email — your password stays the same.",
+        }),
+      );
+    },
+  },
+  emailVerification: {
+    autoSignInAfterVerification: true,
+    expiresIn: DAY,
+    sendVerificationEmail: async ({ user, url }) => {
+      deliver(
+        user.email,
+        "Confirm your email for Nihongo No Michinori",
+        linkEmail({
+          name: user.name,
+          intro:
+            "Welcome to Nihongo No Michinori! Confirm this is your email address so your study plan and progress can be saved. The link works for 24 hours.",
+          action: "Confirm my email",
+          url,
+          outro: "If you didn't create an account, you can ignore this email.",
+        }),
+      );
     },
   },
   socialProviders: googleEnabled()
