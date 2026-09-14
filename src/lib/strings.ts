@@ -2,7 +2,7 @@ import type { Bi } from "./i18n";
 
 /** UI chrome strings, keyed. Content strings live with their content modules. */
 export const STR = {
-  appName: { en: "Shinpuru Nihongo", id: "Shinpuru Nihongo" },
+  appName: { en: "Nihongo No Michinori", id: "Nihongo No Michinori" },
   tagline: {
     en: "Your 90-day N5 → N4 plan, with every lesson and drill built in.",
     id: "Rencana 90 hari N5 → N4-mu, lengkap dengan semua materi dan latihannya.",
@@ -268,7 +268,7 @@ export const STR = {
   imported_ok: { en: "Progress imported.", id: "Progres berhasil diimpor." },
 
   // About
-  about_title: { en: "About Shinpuru Nihongo", id: "Tentang Shinpuru Nihongo" },
+  about_title: { en: "About Nihongo No Michinori", id: "Tentang Nihongo No Michinori" },
 
   // Misc
   coming_soon: { en: "Coming soon", id: "Segera hadir" },

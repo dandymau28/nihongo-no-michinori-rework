@@ -17,8 +17,8 @@ export function AboutView() {
       <Card className="space-y-3 text-sm leading-relaxed text-fg/90">
         <p>
           {en
-            ? "Shinpuru Nihongo turns a 90-day JLPT study spreadsheet into a site you can actually work through. Each day has its lesson, drills, reading, listening, or mock test built in — no jumping between a dozen other websites."
-            : "Shinpuru Nihongo mengubah spreadsheet belajar JLPT 90 hari menjadi situs yang benar-benar bisa kamu kerjakan. Setiap hari punya materi, latihan, bacaan, menyimak, atau tes tiruannya sendiri — tanpa harus berpindah-pindah ke belasan situs lain."}
+            ? "Nihongo No Michinori turns a 90-day JLPT study spreadsheet into a site you can actually work through. Each day has its lesson, drills, reading, listening, or mock test built in — no jumping between a dozen other websites."
+            : "Nihongo No Michinori mengubah spreadsheet belajar JLPT 90 hari menjadi situs yang benar-benar bisa kamu kerjakan. Setiap hari punya materi, latihan, bacaan, menyimak, atau tes tiruannya sendiri — tanpa harus berpindah-pindah ke belasan situs lain."}
         </p>
         <p>
           {en

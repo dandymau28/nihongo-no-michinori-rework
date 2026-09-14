@@ -3,7 +3,7 @@ import { KanjiTrainer } from "@/components/practice/KanjiTrainer";
 import { PageHeading } from "@/components/layout/PageHeading";
 import { STR } from "@/lib/strings";
 
-export const metadata: Metadata = { title: "Kanji Trainer · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Kanji Trainer · Nihongo No Michinori" };
 
 export default function KanjiPage() {
   return (

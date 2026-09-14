@@ -94,7 +94,7 @@ export const PRESETS: Preset[] = [
   },
 ];
 
-const STORAGE_SETTINGS = "sn.conj.settings";
+const STORAGE_SETTINGS = "nnm.conj.settings";
 
 export function loadSettings(): PracticeSettings {
   try {

@@ -19,9 +19,9 @@ export const auth = betterAuth({
       // Not awaited, so response time doesn't reveal whether the account exists.
       void sendEmail({
         to: user.email,
-        subject: "Reset your Shinpuru Nihongo password",
-        text: `Hi ${user.name},\n\nSomeone (hopefully you) asked to reset the password for your Shinpuru Nihongo account. Open this link to choose a new one — it expires in 1 hour:\n\n${url}\n\nIf you didn't ask for this, you can ignore this email.`,
-        html: `<p>Hi ${escapeHtml(user.name)},</p><p>Someone (hopefully you) asked to reset the password for your Shinpuru Nihongo account. The link expires in 1 hour.</p><p><a href="${escapeHtml(url)}">Choose a new password</a></p><p>If you didn't ask for this, you can ignore this email.</p>`,
+        subject: "Reset your Nihongo No Michinori password",
+        text: `Hi ${user.name},\n\nSomeone (hopefully you) asked to reset the password for your Nihongo No Michinori account. Open this link to choose a new one — it expires in 1 hour:\n\n${url}\n\nIf you didn't ask for this, you can ignore this email.`,
+        html: `<p>Hi ${escapeHtml(user.name)},</p><p>Someone (hopefully you) asked to reset the password for your Nihongo No Michinori account. The link expires in 1 hour.</p><p><a href="${escapeHtml(url)}">Choose a new password</a></p><p>If you didn't ask for this, you can ignore this email.</p>`,
       }).catch((err) => console.error("[email] reset password email failed:", err));
     },
   },

@@ -200,7 +200,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       },
       exportJSON: () =>
         JSON.stringify(
-          { app: "shinpuru-nihongo", version: EXPORT_VERSION, progress: map },
+          { app: "nihongo-no-michinori", version: EXPORT_VERSION, progress: map },
           null,
           2,
         ),

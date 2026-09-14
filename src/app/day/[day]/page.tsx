@@ -15,8 +15,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { day } = await params;
   const d = getDay(Number(day));
-  if (!d) return { title: "Day · Shinpuru Nihongo" };
-  return { title: `Day ${d.day}: ${pick(d.title, "en")} · Shinpuru Nihongo` };
+  if (!d) return { title: "Day · Nihongo No Michinori" };
+  return { title: `Day ${d.day}: ${pick(d.title, "en")} · Nihongo No Michinori` };
 }
 
 export default async function DayPage({

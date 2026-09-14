@@ -3,7 +3,7 @@ import { PlannerView } from "@/components/planner/PlannerView";
 import { PageHeading } from "@/components/layout/PageHeading";
 import { STR } from "@/lib/strings";
 
-export const metadata: Metadata = { title: "Planner · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Planner · Nihongo No Michinori" };
 
 export default function PlannerPage() {
   return (

@@ -3,7 +3,7 @@ import { ParticleTrainer } from "@/components/practice/ParticleTrainer";
 import { PageHeading } from "@/components/layout/PageHeading";
 import { STR } from "@/lib/strings";
 
-export const metadata: Metadata = { title: "Particle Trainer · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Particle Trainer · Nihongo No Michinori" };
 
 export default function ParticlesPage() {
   return (

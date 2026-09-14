@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { STR } from "@/lib/strings";
 import { LocalizedText } from "@/components/layout/LocalizedText";
 
-export const metadata: Metadata = { title: "Practice · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Practice · Nihongo No Michinori" };
 
 const TOOLS = [
   {

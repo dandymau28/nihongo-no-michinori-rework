@@ -15,7 +15,7 @@ const notoSansJp = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Shinpuru Nihongo · シンプル日本語",
+  title: "Nihongo No Michinori · 日本語の道のり",
   description:
     "A JLPT N5→N4 study site: a personal 90-day planner with built-in lessons, drills, and mock tests.",
 };
@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 const themeScript = `
 (function () {
   try {
-    var s = JSON.parse(localStorage.getItem('sn.settings') || '{}');
+    var s = JSON.parse(localStorage.getItem('nnm.settings') || '{}');
     var theme = s.theme || 'system';
     var dark = theme === 'dark' || (theme === 'system' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);

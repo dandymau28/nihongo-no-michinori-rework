@@ -16,6 +16,6 @@ echo "→ npm run build"
 npm run build
 
 echo "→ restart service"
-sudo systemctl restart shinpuru-nihongo
+sudo systemctl restart nihongo-no-michinori
 
 echo "✓ deployed $(git rev-parse --short HEAD) at $(date '+%Y-%m-%d %H:%M:%S')"

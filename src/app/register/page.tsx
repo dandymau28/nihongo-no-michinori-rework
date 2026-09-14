@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/auth/AuthForm";
 import { googleEnabled } from "@/lib/server/google";
 import { safeNext } from "@/lib/safeNext";
 
-export const metadata: Metadata = { title: "Create account · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Create account · Nihongo No Michinori" };
 
 export default async function RegisterPage({
   searchParams,

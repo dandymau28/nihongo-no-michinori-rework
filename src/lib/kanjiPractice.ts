@@ -30,7 +30,7 @@ export const MODE_HINT: Record<KanjiMode, Bi> = {
   spelling: { en: "see the reading, pick the kanji", id: "lihat bacaan, pilih kanjinya" },
 };
 
-const STORAGE = "sn.kanji.settings";
+const STORAGE = "nnm.kanji.settings";
 
 export function loadSettings(): KanjiSettings {
   try {

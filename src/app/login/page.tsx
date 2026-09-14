@@ -4,7 +4,7 @@ import { googleEnabled } from "@/lib/server/google";
 import { passwordResetEnabled } from "@/lib/server/resetEnabled";
 import { safeNext } from "@/lib/safeNext";
 
-export const metadata: Metadata = { title: "Sign in · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Sign in · Nihongo No Michinori" };
 
 export default async function LoginPage({
   searchParams,

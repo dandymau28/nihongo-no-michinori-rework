@@ -1,4 +1,4 @@
-# Shinpuru Nihongo · シンプル日本語
+# Nihongo No Michinori · 日本語の道のり
 
 A JLPT **N5 → N4** study site built from a 90-day study planner — now with **accounts**,
 so every learner tracks their own progress and arranges their own plan. Each lesson of

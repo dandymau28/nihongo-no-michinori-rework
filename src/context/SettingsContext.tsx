@@ -31,7 +31,7 @@ const DEFAULTS: Settings = {
   romaji: false,
 };
 
-const STORAGE_KEY = "sn.settings";
+const STORAGE_KEY = "nnm.settings";
 
 type SettingsContextValue = Settings & {
   setLang: (l: Lang) => void;

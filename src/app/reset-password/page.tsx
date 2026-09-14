@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
-export const metadata: Metadata = { title: "New password · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "New password · Nihongo No Michinori" };
 
 export default async function ResetPasswordPage({
   searchParams,

@@ -3,7 +3,7 @@ import { QuestionWordTrainer } from "@/components/practice/QuestionWordTrainer";
 import { PageHeading } from "@/components/layout/PageHeading";
 import { STR } from "@/lib/strings";
 
-export const metadata: Metadata = { title: "Question Word Trainer · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Question Word Trainer · Nihongo No Michinori" };
 
 export default function QuestionWordsPage() {
   return (

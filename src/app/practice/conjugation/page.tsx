@@ -3,7 +3,7 @@ import { ConjugationTrainer } from "@/components/practice/ConjugationTrainer";
 import { PageHeading } from "@/components/layout/PageHeading";
 import { STR } from "@/lib/strings";
 
-export const metadata: Metadata = { title: "Conjugation Trainer · Shinpuru Nihongo" };
+export const metadata: Metadata = { title: "Conjugation Trainer · Nihongo No Michinori" };
 
 export default function ConjugationPage() {
   return (

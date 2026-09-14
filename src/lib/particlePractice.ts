@@ -92,7 +92,7 @@ export const PRESETS: ParticlePreset[] = [
   },
 ];
 
-const STORAGE = "sn.particles.settings";
+const STORAGE = "nnm.particles.settings";
 
 export function loadSettings(): ParticleSettings {
   try {

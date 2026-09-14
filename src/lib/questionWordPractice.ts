@@ -84,7 +84,7 @@ export const PRESETS: QWPreset[] = [
   },
 ];
 
-const STORAGE = "sn.qwords.settings";
+const STORAGE = "nnm.qwords.settings";
 
 export function loadSettings(): QWSettings {
   try {

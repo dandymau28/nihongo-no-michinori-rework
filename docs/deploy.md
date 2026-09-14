@@ -4,7 +4,7 @@ With accounts, the site is no longer a static export: it runs as a Node server
 (`next start`) with PostgreSQL for users, plans and progress. nginx terminates TLS
 and proxies to the app.
 
-Target in this guide: `https://shinpuru-nihongo.xerzack.web.id`
+Target in this guide: `https://nihongo-no-michinori.xerzack.web.id`
 
 ---
 
@@ -29,8 +29,8 @@ sudo ufw enable
 
 ```bash
 sudo -u postgres psql <<'SQL'
-CREATE USER shinpuru WITH PASSWORD 'choose-a-strong-password';
-CREATE DATABASE shinpuru_nihongo OWNER shinpuru;
+CREATE USER michinori WITH PASSWORD 'choose-a-strong-password';
+CREATE DATABASE nihongo_no_michinori OWNER michinori;
 SQL
 ```
 
@@ -39,10 +39,10 @@ PostgreSQL only listens on localhost by default — keep it that way.
 ## 3. Get the code and configure
 
 ```bash
-sudo mkdir -p /var/www/shinpuru-nihongo
-sudo chown -R "$USER":"$USER" /var/www/shinpuru-nihongo
-git clone <your-repo-url> /var/www/shinpuru-nihongo
-cd /var/www/shinpuru-nihongo
+sudo mkdir -p /var/www/nihongo-no-michinori
+sudo chown -R "$USER":"$USER" /var/www/nihongo-no-michinori
+git clone <your-repo-url> /var/www/nihongo-no-michinori
+cd /var/www/nihongo-no-michinori
 
 cp .env.example .env
 nano .env
@@ -52,9 +52,9 @@ Fill in:
 
 | Variable | Value |
 |----------|-------|
-| `DATABASE_URL` | `postgresql://shinpuru:<password>@localhost:5432/shinpuru_nihongo?schema=public` |
+| `DATABASE_URL` | `postgresql://michinori:<password>@localhost:5432/nihongo_no_michinori?schema=public` |
 | `BETTER_AUTH_SECRET` | output of `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | `https://shinpuru-nihongo.xerzack.web.id` |
+| `BETTER_AUTH_URL` | `https://nihongo-no-michinori.xerzack.web.id` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | see §7 (leave empty to hide Google sign-in) |
 
 ```bash
@@ -67,19 +67,19 @@ npm run build
 ## 4. Run it as a service
 
 ```bash
-sudo nano /etc/systemd/system/shinpuru-nihongo.service
+sudo nano /etc/systemd/system/nihongo-no-michinori.service
 ```
 
 ```ini
 [Unit]
-Description=Shinpuru Nihongo (Next.js)
+Description=Nihongo No Michinori (Next.js)
 After=network.target postgresql.service
 
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/shinpuru-nihongo
-EnvironmentFile=/var/www/shinpuru-nihongo/.env
+WorkingDirectory=/var/www/nihongo-no-michinori
+EnvironmentFile=/var/www/nihongo-no-michinori/.env
 Environment=NODE_ENV=production PORT=3000 HOSTNAME=127.0.0.1
 ExecStart=/usr/bin/npm run start
 Restart=on-failure
@@ -89,24 +89,24 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-sudo chown -R www-data:www-data /var/www/shinpuru-nihongo   # or set User= to your deploy user
+sudo chown -R www-data:www-data /var/www/nihongo-no-michinori   # or set User= to your deploy user
 sudo systemctl daemon-reload
-sudo systemctl enable --now shinpuru-nihongo
-systemctl status shinpuru-nihongo
+sudo systemctl enable --now nihongo-no-michinori
+systemctl status nihongo-no-michinori
 curl -I http://127.0.0.1:3000
 ```
 
 ## 5. nginx reverse proxy
 
 ```bash
-sudo nano /etc/nginx/sites-available/shinpuru-nihongo
+sudo nano /etc/nginx/sites-available/nihongo-no-michinori
 ```
 
 ```nginx
 server {
     listen 80;
     listen [::]:80;
-    server_name shinpuru-nihongo.xerzack.web.id;
+    server_name nihongo-no-michinori.xerzack.web.id;
 
     location /_next/static/ {
         proxy_pass http://127.0.0.1:3000;
@@ -132,16 +132,16 @@ server {
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/shinpuru-nihongo /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/nihongo-no-michinori /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-(DNS: an `A` record for `shinpuru-nihongo` → the VPS IP, as before.)
+(DNS: an `A` record for `nihongo-no-michinori` → the VPS IP.)
 
 ## 6. HTTPS
 
 ```bash
-sudo certbot --nginx -d shinpuru-nihongo.xerzack.web.id
+sudo certbot --nginx -d nihongo-no-michinori.xerzack.web.id
 sudo certbot renew --dry-run
 ```
 
@@ -153,11 +153,11 @@ Google callback won't match.
 1. Google Cloud Console → **APIs & Services → Credentials → Create credentials →
    OAuth client ID** (type: *Web application*). Configure the OAuth consent screen
    first if prompted.
-2. **Authorized JavaScript origins:** `https://shinpuru-nihongo.xerzack.web.id`
+2. **Authorized JavaScript origins:** `https://nihongo-no-michinori.xerzack.web.id`
 3. **Authorized redirect URIs:**
-   `https://shinpuru-nihongo.xerzack.web.id/api/auth/callback/google`
+   `https://nihongo-no-michinori.xerzack.web.id/api/auth/callback/google`
    (add `http://localhost:3000/api/auth/callback/google` for local dev).
-4. Put the client ID/secret in `.env` and `sudo systemctl restart shinpuru-nihongo`.
+4. Put the client ID/secret in `.env` and `sudo systemctl restart nihongo-no-michinori`.
 
 The "Continue with Google" button appears automatically once both values are set.
 
@@ -166,7 +166,7 @@ The "Continue with Google" button appears automatically once both values are set
 Any SMTP account works; set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`,
 `EMAIL_FROM` in `.env` and restart. Until then, "Forgot password?" is hidden and any
 reset email is written to the service log instead
-(`journalctl -u shinpuru-nihongo | grep -A8 '\[email\]'`).
+(`journalctl -u nihongo-no-michinori | grep -A8 '\[email\]'`).
 
 | Provider | Host / port | User / pass | Notes |
 |----------|-------------|-------------|-------|
@@ -179,7 +179,7 @@ reset email is written to the service log instead
 ## Redeploying after a change
 
 ```bash
-cd /var/www/shinpuru-nihongo
+cd /var/www/nihongo-no-michinori
 ./deploy.sh          # git pull + npm ci + migrate + build + restart
 ```
 
@@ -189,7 +189,7 @@ All learner data is in PostgreSQL now, so back it up:
 
 ```bash
 # daily dump, e.g. from cron
-pg_dump -U shinpuru -h localhost shinpuru_nihongo | gzip > /var/backups/shinpuru-$(date +%F).sql.gz
+pg_dump -U michinori -h localhost nihongo_no_michinori | gzip > /var/backups/michinori-$(date +%F).sql.gz
 ```
 
 ## Notes
