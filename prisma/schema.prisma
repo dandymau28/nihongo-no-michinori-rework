@@ -1,5 +1,7 @@
 // Prisma schema — PostgreSQL.
 // Auth tables (user/session/account/verification) follow better-auth's core schema.
+// Database naming is snake_case throughout (tables via @@map, columns via @map);
+// the generated client keeps camelCase field names.
 
 generator client {
   provider = "prisma-client"
@@ -18,10 +20,10 @@ model User {
   id            String   @id
   name          String
   email         String   @unique
-  emailVerified Boolean  @default(false)
+  emailVerified Boolean  @default(false) @map("email_verified")
   image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   sessions      Session[]
   accounts      Account[]
@@ -35,13 +37,13 @@ model User {
 
 model Session {
   id        String   @id
-  expiresAt DateTime
+  expiresAt DateTime @map("expires_at")
   token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -50,19 +52,19 @@ model Session {
 
 model Account {
   id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   @@index([userId])
   @@map("account")
@@ -72,9 +74,9 @@ model Verification {
   id         String   @id
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([identifier])
   @@map("verification")
@@ -86,15 +88,15 @@ model Verification {
 
 /// One per learner: how their plan is laid out on the calendar.
 model PlanSettings {
-  userId    String   @id
+  userId    String   @id @map("user_id")
   /// ISO YYYY-MM-DD
-  startDate String
+  startDate String   @map("start_date")
   /// Weekday bitmask, bit 0 = Sunday … bit 6 = Saturday
-  studyDays Int      @default(127)
+  studyDays Int      @default(127) @map("study_days")
   /// Lessons per study day when (re)building the schedule
-  perDay    Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  perDay    Int      @default(1) @map("per_day")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("plan_settings")
@@ -104,8 +106,8 @@ model PlanSettings {
 /// the 90-day plan) or a learner-created custom task (`materialDay` null).
 model PlanEntry {
   id          String   @id @default(cuid())
-  userId      String
-  materialDay Int?
+  userId      String   @map("user_id")
+  materialDay Int?     @map("material_day")
   title       String?
   note        String?
   /// ISO YYYY-MM-DD
@@ -113,8 +115,8 @@ model PlanEntry {
   skipped     Boolean  @default(false)
   /// Custom tasks only — lessons take their status from DayProgress
   done        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, materialDay])
@@ -127,14 +129,14 @@ model PlanEntry {
 // ---------------------------------------------------------------------------
 
 model DayProgress {
-  userId    String
+  userId    String   @map("user_id")
   /// Lesson day number (1..90)
   day       Int
   status    String   @default("not-yet")
   reviewed  Boolean  @default(false)
   notes     String   @default("")
   exercises Json     @default("[]")
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @map("updated_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, day])
@@ -143,10 +145,10 @@ model DayProgress {
 
 /// Free-practice trainer stats (conjugation, particles, kanji, question words).
 model PracticeStats {
-  userId    String
+  userId    String   @map("user_id")
   key       String
   data      Json
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @map("updated_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, key])
