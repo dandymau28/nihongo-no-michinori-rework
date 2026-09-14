@@ -8,6 +8,8 @@ import { useProgress } from "@/context/ProgressContext";
 import { usePlan } from "@/context/PlanContext";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/lib/useAuth";
+import { useSiteFeatures } from "@/lib/useSiteFeatures";
+import { SendVerificationEmail } from "@/components/auth/SendVerificationEmail";
 import { STR } from "@/lib/strings";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Segmented } from "@/components/ui/Segmented";
@@ -29,6 +31,9 @@ export function SettingsView() {
     setRomaji,
   } = useSettings();
   const { user } = useAuth();
+  const features = useSiteFeatures(Boolean(user && !user.emailVerified));
+  /** Signed in, email not confirmed, and the server can send the confirmation email. */
+  const needsConfirmation = Boolean(user && !user.emailVerified && features?.emailLinks);
   const router = useRouter();
   const { exportJSON, importJSON, resetAll, canSave } = useProgress();
   const plan = usePlan();
@@ -177,12 +182,25 @@ export function SettingsView() {
                   {t({ en: "Confirmed", id: "Terkonfirmasi" })}
                 </span>
               ) : (
-                <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">
-                  {t({ en: "Not confirmed", id: "Belum dikonfirmasi" })}
-                </span>
+                needsConfirmation && (
+                  <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">
+                    {t({ en: "Not confirmed", id: "Belum dikonfirmasi" })}
+                  </span>
+                )
               )}
             </p>
           </div>
+          {needsConfirmation && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted">
+                {t({
+                  en: "Confirm your email now — you'll need it to sign in again after signing out.",
+                  id: "Konfirmasi emailmu sekarang — diperlukan untuk masuk lagi setelah keluar.",
+                })}
+              </p>
+              <SendVerificationEmail email={user.email} />
+            </div>
+          )}
           <Button size="sm" variant="secondary" onClick={signOut}>
             {t({ en: "Sign out", id: "Keluar" })}
           </Button>

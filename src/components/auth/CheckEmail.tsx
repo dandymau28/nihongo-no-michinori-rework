@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
 import { useSettings } from "@/context/SettingsContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-
-const COOLDOWN_SECONDS = 60;
+import { useVerificationResend } from "./useVerificationResend";
 
 /** "Check your inbox" panel shown after sign-up, or when an unconfirmed account tries to sign in. */
 export function CheckEmail({
@@ -23,27 +20,11 @@ export function CheckEmail({
   onBack: () => void;
 }) {
   const { t } = useSettings();
-  const [cooldown, setCooldown] = useState(sendFailed ? 0 : COOLDOWN_SECONDS);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    sendFailed ? "error" : "idle",
-  );
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(id);
-  }, [cooldown]);
-
-  async function resend() {
-    setStatus("sending");
-    const res = await authClient.sendVerificationEmail({ email, callbackURL });
-    if (res.error) {
-      setStatus("error");
-      return;
-    }
-    setStatus("sent");
-    setCooldown(COOLDOWN_SECONDS);
-  }
+  const { status, cooldown, send } = useVerificationResend(email, {
+    callbackURL,
+    justSent: !sendFailed,
+  });
+  const showError = status === "error" || (status === "idle" && sendFailed);
 
   return (
     <Card className="space-y-3">
@@ -70,7 +51,7 @@ export function CheckEmail({
           {t({ en: "New link sent.", id: "Tautan baru terkirim." })}
         </p>
       )}
-      {status === "error" && (
+      {showError && (
         <p role="alert" className="text-xs text-danger">
           {t({
             en: "The email couldn't be sent. Wait a minute, then send it again.",
@@ -83,7 +64,7 @@ export function CheckEmail({
         <Button
           size="sm"
           variant="secondary"
-          onClick={resend}
+          onClick={send}
           disabled={cooldown > 0 || status === "sending"}
         >
           {status === "sending"
