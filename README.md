@@ -60,6 +60,7 @@ Environment variables (see `.env.example`):
 | `BETTER_AUTH_URL` | public origin, e.g. `http://localhost:3000` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional; Google button hidden when empty. Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | optional; sends password-reset and email-confirmation links. While empty, the links are printed to the server log; in production, password reset and email confirmation stay off until SMTP is set |
+| `EMAIL_REPLY_TO` | optional; where replies to those emails go (e.g. your own inbox, when the sending domain has no mailbox) |
 
 Other scripts:
 

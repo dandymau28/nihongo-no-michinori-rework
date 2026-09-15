@@ -37,7 +37,12 @@ export async function sendEmail(mail: Mail): Promise<void> {
     );
     return;
   }
-  await t.sendMail({ from: process.env.EMAIL_FROM || process.env.SMTP_USER, ...mail });
+  await t.sendMail({
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    // The sending domain may have no mailbox — replies go to an inbox someone reads.
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+    ...mail,
+  });
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

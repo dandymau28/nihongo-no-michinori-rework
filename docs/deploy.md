@@ -101,7 +101,8 @@ SMTP_HOST=""
 SMTP_PORT="465"
 SMTP_USER=""
 SMTP_PASS=""
-EMAIL_FROM="Nihongo No Michinori <no-reply@xerzack.web.id>"
+EMAIL_FROM="Nihongo No Michinori <support@xerzack.web.id>"
+EMAIL_REPLY_TO=""
 EOF
 chmod 600 .env
 ```
@@ -220,7 +221,10 @@ next time they try to sign in. Google accounts count as confirmed.
 4. Check the VPS can reach Resend: `nc -vz -w 10 smtp.resend.com 465` (if it times out, allow
    outbound TCP 465 in the firewall panel, or use port 2587).
 5. In `.env`: `SMTP_HOST="smtp.resend.com"`, `SMTP_PORT="465"`, `SMTP_USER="resend"`,
-   `SMTP_PASS="re_…"`, then:
+   `SMTP_PASS="re_…"`. Send from a real-looking address on your verified domain, e.g.
+   `EMAIL_FROM="Nihongo No Michinori <support@xerzack.web.id>"` — `no-reply@` addresses tend
+   to be treated more harshly by spam filters — and set `EMAIL_REPLY_TO` to an inbox you
+   read (your domain has no mailbox, so replies to `support@` would bounce). Then:
 
 ```bash
 sudo systemctl restart nihongo-no-michinori
