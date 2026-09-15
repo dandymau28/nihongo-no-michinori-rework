@@ -1,0 +1,22 @@
+# Installed by scripts/setup-zero-downtime.sh as /etc/systemd/system/nihongo-no-michinori@.service
+# One instance per port: nihongo-no-michinori@3101 and nihongo-no-michinori@3102.
+# Each runs whatever release __APP_DIR__/slots/<port> points at.
+
+[Unit]
+Description=Nihongo No Michinori (port %i)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__APP_DIR__/slots/%i
+EnvironmentFile=__APP_DIR__/shared/.env
+Environment=NODE_ENV=production
+ExecStart=__NODE__ node_modules/next/dist/bin/next start -p %i -H 127.0.0.1
+Restart=on-failure
+RestartSec=5
+# On SIGTERM, next start stops accepting connections and finishes in-flight requests.
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

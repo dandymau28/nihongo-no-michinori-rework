@@ -71,7 +71,12 @@ npm run db:studio   # browse the database
 
 The app runs as a Node server behind nginx with PostgreSQL. See
 [`docs/deploy.md`](docs/deploy.md) for the full VPS setup (systemd, nginx, Certbot,
-Google OAuth, backups) and `deploy.sh` for redeploys.
+Google OAuth, backups).
+
+Updates deploy with **zero downtime** (blue/green on one server): `deploy.sh` builds each
+release in its own folder, starts it on a second port, checks `/api/health`, switches nginx
+and then stops the old release. `rollback.sh` and `restart.sh` do the same swap without a
+rebuild. The scripts live in `scripts/`, the systemd template in `deploy/`.
 
 ## How it fits together
 

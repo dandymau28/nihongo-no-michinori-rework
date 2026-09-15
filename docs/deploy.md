@@ -255,19 +255,81 @@ Dumps run at 03:00 and are kept for 14 days. Restore one with
 
 ---
 
-## Redeploying a new version
+## Deploying updates without downtime
 
-```bash
-cd /var/www/nihongo-no-michinori && bash deploy.sh
+Each deploy builds the new version in its own folder while the live site keeps serving,
+applies migrations, starts the new version on a second port, checks `/api/health`, switches
+nginx over, and only then stops the old version (after letting its requests finish).
+Visitors never get an error page, tabs opened before the deploy reload into the new version,
+and nobody is signed out.
+
+```
+/var/www/nihongo-no-michinori/
+  releases/<date>-<commit>/   one full build per deploy (the last 3 are kept)
+  shared/.env                 the environment for every release — edit this one
+  shared/static/              JS/CSS from recent releases, served by nginx
+  shared/upstream.conf        which port is live
+  slots/3101, slots/3102      which release each app instance runs
+  current                     the live release
 ```
 
-`deploy.sh` pulls, installs, applies migrations, builds and restarts the service.
+### One-time switch from the single-service setup
+
+Do this once, as your SSH user. The site stays up throughout.
+
+```bash
+cd /var/www/nihongo-no-michinori && git pull && bash scripts/setup-zero-downtime.sh
+```
+
+This copies `.env` to `shared/.env`, installs the `nihongo-no-michinori@.service` template and
+points the nginx site at an upstream (the original file is backed up in `/etc/nginx/`).
+
+```bash
+bash /var/www/nihongo-no-michinori/deploy.sh
+```
+
+The first deploy starts the new layout on port 3101, moves traffic to it and stops the old
+`nihongo-no-michinori` service. When it has finished, remove the old checkout files:
+
+```bash
+bash /var/www/nihongo-no-michinori/current/scripts/setup-zero-downtime.sh --cleanup-legacy
+```
+
+After the switch, wherever the steps above say to edit `.env` or restart the service, edit
+`/var/www/nihongo-no-michinori/shared/.env` and run `restart.sh` instead.
+
+### Everyday commands
+
+| Command | What it does |
+|---|---|
+| `bash /var/www/nihongo-no-michinori/deploy.sh` | Deploy the latest `main` — a few minutes, no downtime |
+| `bash /var/www/nihongo-no-michinori/rollback.sh` | Put the previous release back — about a minute, no rebuild |
+| `bash /var/www/nihongo-no-michinori/restart.sh` | Restart without downtime, e.g. after editing `shared/.env` |
+| `curl -s https://nihongo-no-michinori.xerzack.web.id/api/health` | Which release is live, and whether it reaches the database |
+| `sudo journalctl -u 'nihongo-no-michinori@*' -f` | Follow the app logs |
+
+If a new release fails its health check, the script prints its logs, stops it and exits —
+the live site is never touched. Only one deploy, rollback or restart can run at a time.
+
+### The database rule
+
+For about 30 seconds per deploy the old and new versions share the database, so every
+migration must still work with the previous release:
+
+- **Fine in one deploy:** new tables, new nullable columns or columns with a default, new indexes.
+- **Split across two deploys:** renaming or dropping a column, making a column required,
+  changing a column's type. The first deploy adds the new column and writes to both; the
+  second switches the code over and removes the old one.
+
+Rollbacks don't undo migrations, so following this rule is also what keeps rollbacks safe.
 
 ## Troubleshooting
 
 | What you see | Look at | Fix |
 |---|---|---|
-| **502 Bad Gateway** | `sudo journalctl -u nihongo-no-michinori -n 50` | The app isn't running, or the port in the service file and in nginx differ |
+| **502 Bad Gateway** | `sudo journalctl -u 'nihongo-no-michinori@*' -n 50` (before the switch: `-u nihongo-no-michinori`) | The app isn't running, or nginx points at a port nothing listens on — compare `shared/upstream.conf` with `systemctl list-units 'nihongo-no-michinori@*'` |
+| deploy.sh says the release **didn't pass its health check** | The log lines it printed | Fix the error and deploy again — the live site kept running |
+| deploy.sh says **another deploy is already running** | `ps aux \| grep deploy.sh` | Wait for it to finish; the lock frees itself when that script exits |
 | `P1000: Authentication failed` | `DATABASE_URL` in `.env` | Password doesn't match: `sudo -u postgres psql -c "ALTER USER michinori WITH PASSWORD '…';"` |
 | Prisma says it needs Node 20.19 | `node -v` | Upgrade Node (step 3), then `npm ci` again |
 | Signed in but bounced back out, or Google returns to `localhost` | `BETTER_AUTH_URL` | Must be exactly `https://nihongo-no-michinori.xerzack.web.id`; restart |
