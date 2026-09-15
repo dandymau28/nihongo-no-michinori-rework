@@ -11,14 +11,14 @@ import { Button } from "@/components/ui/Button";
 /** Offers to push the unfinished part of the plan forward so it resumes today. */
 export function OverdueBanner() {
   const { t, lang } = useSettings();
-  const { getDay } = useProgress();
+  const { getProgress } = useProgress();
   const { entries, today, settings, shift } = usePlan();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   if (!today || !settings) return null;
   const overdue = entries.filter(
-    (e) => !e.skipped && e.date && e.date < today && !isEntryDone(e, getDay),
+    (e) => !e.skipped && e.date && e.date < today && !isEntryDone(e, getProgress),
   );
   if (overdue.length === 0) return null;
 

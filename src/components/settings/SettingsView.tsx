@@ -110,7 +110,7 @@ export function SettingsView() {
         </Row>
       </Card>
 
-      {plan.isPreview ? (
+      {!plan.signedIn ? (
         <SignInPrompt
           message={{
             en: "Sign in to set up your own study plan and keep your progress on every device.",

@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { usePlan } from "@/context/PlanContext";
-import { PLANNER } from "@/data/planner";
 import { ALL_WEEKDAYS, MAX_PER_DAY, buildSchedule, isISODate, todayISO } from "@/lib/schedule";
 import { formatDateLong } from "@/lib/dates";
-import type { PlanSettings } from "@/lib/planTypes";
+import type { PlannerSource, ScheduleSettings } from "@/lib/planTypes";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/cn";
+import { plannerName } from "./plannerName";
 
 const WEEKDAY_SHORT = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -18,30 +18,47 @@ const WEEKDAY_SHORT = {
 /** Monday-first display order. */
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-export function PlanSettingsForm({
-  mode,
-  onDone,
-}: {
-  mode: "setup" | "edit";
-  onDone?: () => void;
-}) {
+type Props =
+  | {
+      mode: "create";
+      source: PlannerSource;
+      /** How many lessons the new planner starts with (for the finish estimate). */
+      lessonCount: number;
+      /** Show a name field (custom planners). */
+      askName?: boolean;
+      onDone?: () => void;
+    }
+  | { mode: "edit"; onDone?: () => void };
+
+export function PlanSettingsForm(props: Props) {
   const { t, lang } = useSettings();
-  const { settings, entries, today, saveSettings } = usePlan();
-  const [form, setForm] = useState<PlanSettings>(
-    () => settings ?? { startDate: today ?? todayISO(), studyDays: ALL_WEEKDAYS, perDay: 1 },
+  const { settings, lessonEntries, today, saveSettings, createPlanner } = usePlan();
+  const editing = props.mode === "edit";
+
+  const [form, setForm] = useState<ScheduleSettings>(() =>
+    editing && settings
+      ? { startDate: settings.startDate, studyDays: settings.studyDays, perDay: settings.perDay }
+      : { startDate: today ?? todayISO(), studyDays: ALL_WEEKDAYS, perDay: 1 },
   );
+  const [name, setName] = useState(editing ? (settings?.name ?? "") : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const valid = isISODate(form.startDate);
+  const count =
+    props.mode === "create" ? props.lessonCount : lessonEntries.filter((e) => !e.skipped).length;
 
   const finish = useMemo(() => {
-    if (!valid) return null;
-    const skipped = new Set(entries.filter((e) => e.skipped).map((e) => e.materialDay));
-    const days = PLANNER.map((d) => d.day).filter((d) => !skipped.has(d));
-    if (days.length === 0) return null;
-    return buildSchedule(days, form.startDate, form.studyDays, form.perDay).get(days[days.length - 1]) ?? null;
-  }, [form, entries, valid]);
+    if (!valid || count === 0) return null;
+    const slots = Array.from({ length: count }, (_, i) => i);
+    return buildSchedule(slots, form.startDate, form.studyDays, form.perDay).get(count - 1) ?? null;
+  }, [form, count, valid]);
+
+  const showName = props.mode === "edit" || props.askName;
+  const namePlaceholder =
+    editing && settings
+      ? plannerName({ name: null, presetId: settings.presetId }, t)
+      : t({ en: "My planner", id: "Planner saya" });
 
   function toggleWeekday(wd: number) {
     setForm((f) => {
@@ -52,12 +69,12 @@ export function PlanSettingsForm({
 
   async function submit(rebuild: boolean) {
     if (
+      props.mode === "edit" &&
       rebuild &&
-      mode === "edit" &&
       !confirm(
         t({
-          en: "Rebuild the schedule? Lessons you moved by hand go back into order from the start date.",
-          id: "Susun ulang jadwal? Materi yang kamu pindahkan manual akan kembali berurutan dari tanggal mulai.",
+          en: "Rebuild the schedule? Every lesson is laid out again in your order from the start date, including lessons you moved by hand.",
+          id: "Susun ulang jadwal? Semua materi diatur ulang sesuai urutanmu dari tanggal mulai, termasuk yang kamu pindahkan manual.",
         }),
       )
     ) {
@@ -66,8 +83,12 @@ export function PlanSettingsForm({
     setBusy(true);
     setError(null);
     try {
-      await saveSettings(form, rebuild);
-      onDone?.();
+      if (props.mode === "create") {
+        await createPlanner({ ...form, name: name.trim() || null, source: props.source });
+      } else {
+        await saveSettings({ ...form, name: name.trim() || null }, rebuild);
+      }
+      props.onDone?.();
     } catch {
       setError(t({ en: "Couldn't save — please try again.", id: "Gagal menyimpan — coba lagi." }));
     } finally {
@@ -77,11 +98,28 @@ export function PlanSettingsForm({
 
   return (
     <div className="space-y-4">
+      {showName && (
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-muted">
+            {t({ en: "Planner name", id: "Nama planner" })}
+          </span>
+          <input
+            id="planner-name"
+            value={name}
+            maxLength={80}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={namePlaceholder}
+            className="h-9 w-full max-w-sm rounded-xl border border-border bg-surface px-3 text-sm"
+          />
+        </label>
+      )}
+
       <label className="block">
         <span className="mb-1.5 block text-xs font-medium text-muted">
           {t({ en: "Start date", id: "Tanggal mulai" })}
         </span>
         <input
+          id="planner-start-date"
           type="date"
           value={form.startDate}
           onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
@@ -121,6 +159,7 @@ export function PlanSettingsForm({
           {t({ en: "Lessons per study day", id: "Materi per hari belajar" })}
         </span>
         <Select
+          id="planner-per-day"
           value={form.perDay}
           onChange={(e) => setForm((f) => ({ ...f, perDay: Number(e.target.value) }))}
         >
@@ -132,19 +171,28 @@ export function PlanSettingsForm({
         </Select>
       </label>
 
-      {finish && (
+      {finish ? (
         <p className="text-xs text-muted">
-          {t({ en: "At this pace you finish on", id: "Dengan ritme ini kamu selesai pada" })}{" "}
+          {t({ en: `${count} lessons — at this pace you finish on`, id: `${count} materi — dengan ritme ini kamu selesai pada` })}{" "}
           <b className="text-fg">{formatDateLong(finish, lang)}</b>.
         </p>
+      ) : (
+        props.mode === "create" && (
+          <p className="text-xs text-muted">
+            {t({
+              en: "You'll add lessons after creating the planner — they're scheduled with these settings.",
+              id: "Kamu akan menambah materi setelah planner dibuat — materi dijadwalkan dengan pengaturan ini.",
+            })}
+          </p>
+        )
       )}
 
       {error && <p className="text-xs text-danger">{error}</p>}
 
       <div className="flex flex-wrap gap-2">
-        {mode === "setup" ? (
+        {props.mode === "create" ? (
           <Button onClick={() => submit(true)} disabled={busy || !valid}>
-            {t({ en: "Create my plan", id: "Buat rencanaku" })}
+            {t({ en: "Start this planner", id: "Mulai planner ini" })}
           </Button>
         ) : (
           <>
@@ -158,11 +206,11 @@ export function PlanSettingsForm({
         )}
       </div>
 
-      {mode === "edit" && (
+      {props.mode === "edit" && (
         <p className="text-xs text-muted">
           {t({
-            en: "“Save only” keeps every lesson on its current date (study days are still used when you push lessons later). “Rebuild” lays all lessons out again from the start date. Custom tasks and skipped lessons are never touched.",
-            id: "“Simpan saja” membiarkan setiap materi di tanggalnya sekarang (hari belajar tetap dipakai saat kamu menggeser materi nanti). “Susun ulang” mengatur ulang semua materi dari tanggal mulai. Tugas pribadi dan materi yang dilewati tidak diubah.",
+            en: "“Save only” keeps every lesson on its current date (study days and pace are used when lessons are added, reordered or pushed). “Rebuild” lays all lessons out again in your order from the start date. Custom tasks and skipped lessons are never touched.",
+            id: "“Simpan saja” membiarkan setiap materi di tanggalnya sekarang (hari belajar dan ritme dipakai saat materi ditambah, diurutkan ulang, atau digeser). “Susun ulang” mengatur ulang semua materi sesuai urutanmu dari tanggal mulai. Tugas pribadi dan materi yang dilewati tidak diubah.",
           })}
         </p>
       )}

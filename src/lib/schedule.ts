@@ -81,21 +81,21 @@ export function stepsToReach(from: string, target: string, mask: number): number
 }
 
 /**
- * Lay `materialDays` (in order) onto consecutive study days from `startISO`,
- * `perDay` lessons per study day.
+ * Lay `items` (in order) onto consecutive study days from `startISO`,
+ * `perDay` items per study day.
  */
-export function buildSchedule(
-  materialDays: number[],
+export function buildSchedule<K>(
+  items: K[],
   startISO: string,
   mask: number,
   perDay = 1,
-): Map<number, string> {
+): Map<K, string> {
   const per = Math.min(Math.max(Math.round(perDay), 1), MAX_PER_DAY);
-  const out = new Map<number, string>();
+  const out = new Map<K, string>();
   let date = studyDayOnOrAfter(startISO, mask);
-  materialDays.forEach((m, i) => {
+  items.forEach((item, i) => {
     if (i > 0 && i % per === 0) date = shiftStudyDays(date, 1, mask);
-    out.set(m, date);
+    out.set(item, date);
   });
   return out;
 }

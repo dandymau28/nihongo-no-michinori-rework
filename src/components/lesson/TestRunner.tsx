@@ -10,15 +10,15 @@ import { ExerciseSet } from "@/components/exercises/ExerciseSet";
 
 export function TestRunner({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: TestModule;
-  dayNumber: number;
+  lessonId: string;
 }) {
   const { t, lang } = useSettings();
-  const { getDay } = useProgress();
+  const { getProgress } = useProgress();
 
-  const results = getDay(dayNumber).exercises;
+  const results = getProgress(lessonId).exercises;
   const groupIds = new Set(module.groups.map((g) => g.id));
   const relevant = results.filter((r) => groupIds.has(r.setId));
   const answered = relevant.reduce((s, r) => s + r.total, 0);
@@ -64,7 +64,7 @@ export function TestRunner({
       </Card>
 
       {module.groups.map((g) => (
-        <ExerciseSet key={g.id} dayNumber={dayNumber} group={g} />
+        <ExerciseSet key={g.id} lessonId={lessonId} group={g} />
       ))}
     </div>
   );

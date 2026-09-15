@@ -10,10 +10,10 @@ import { ExerciseSet } from "@/components/exercises/ExerciseSet";
 
 export function ReadingRunner({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: ReadingSet;
-  dayNumber: number;
+  lessonId: string;
 }) {
   const { t } = useSettings();
 
@@ -50,7 +50,7 @@ export function ReadingRunner({
           </Card>
 
           <ExerciseSet
-            dayNumber={dayNumber}
+            lessonId={lessonId}
             group={{
               id: `${module.slug}:${item.id}`,
               title: { en: `${t(item.title)} — questions`, id: `${t(item.title)} — soal` },

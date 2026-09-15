@@ -63,12 +63,12 @@ function TtsClip({ clip }: { clip: ListeningClip }) {
 
 function ClipBlock({
   clip,
-  dayNumber,
+  lessonId,
   slug,
   index,
 }: {
   clip: ListeningClip;
-  dayNumber: number;
+  lessonId: string;
   slug: string;
   index: number;
 }) {
@@ -100,7 +100,7 @@ function ClipBlock({
       </Card>
 
       <ExerciseSet
-        dayNumber={dayNumber}
+        lessonId={lessonId}
         group={{
           id: `${slug}:${clip.id}`,
           title: { en: `${t(clip.title)} — questions`, id: `${t(clip.title)} — soal` },
@@ -113,10 +113,10 @@ function ClipBlock({
 
 export function ListeningRunner({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: ListeningSet;
-  dayNumber: number;
+  lessonId: string;
 }) {
   const { t } = useSettings();
   return (
@@ -131,7 +131,7 @@ export function ListeningRunner({
         <ClipBlock
           key={clip.id}
           clip={clip}
-          dayNumber={dayNumber}
+          lessonId={lessonId}
           slug={module.slug}
           index={i}
         />

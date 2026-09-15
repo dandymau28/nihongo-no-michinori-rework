@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { TOTAL_DAYS } from "@/lib/dates";
+import { getLesson } from "@/data/lessons";
+import { getPreset } from "@/data/presets";
 import { MAX_PER_DAY, isISODate } from "@/lib/schedule";
 
 const isoDate = z.string().refine(isISODate, "expected YYYY-MM-DD");
 
-export const dayNumber = z.coerce.number().int().min(1).max(TOTAL_DAYS);
+export const lessonId = z.string().refine((id) => !!getLesson(id), "unknown lesson");
 
 const exerciseResult = z.object({
   setId: z.string().min(1).max(200),
@@ -14,23 +15,51 @@ const exerciseResult = z.object({
   scored: z.boolean().optional(),
 });
 
-export const dayProgress = z.object({
+export const lessonProgress = z.object({
   status: z.enum(["not-yet", "partial", "done"]),
   reviewed: z.boolean(),
   notes: z.string().max(20_000),
   exercises: z.array(exerciseResult).max(300),
 });
 
+/** Keys are lesson ids, or day numbers from exports made before lessons had ids. */
 export const progressImport = z.object({
-  progress: z.record(z.string().regex(/^\d+$/), dayProgress),
+  progress: z.record(z.string().min(1).max(100), lessonProgress),
 });
 
-export const planSettings = z.object({
+const schedule = {
   startDate: isoDate,
   studyDays: z.number().int().min(1).max(127),
   perDay: z.number().int().min(1).max(MAX_PER_DAY),
-  /** Re-lay every non-skipped lesson onto the calendar from `startDate`. */
+};
+
+const plannerName = z.string().trim().max(80).nullable().optional();
+
+export const newPlanner = z.object({
+  ...schedule,
+  name: plannerName,
+  source: z.union([
+    z.object({ presetId: z.string().refine((id) => !!getPreset(id), "unknown preset") }),
+    z.object({ lessonIds: z.array(lessonId).max(1000) }),
+  ]),
+});
+
+export const plannerSettings = z.object({
+  ...schedule,
+  name: plannerName,
+  /** Lay every non-skipped lesson out again, in order, from `startDate`. */
   rebuild: z.boolean().default(false),
+});
+
+export const addLessons = z.object({
+  lessonIds: z.array(lessonId).min(1).max(1000),
+  /** The learner's local date — new lessons are never scheduled before it. */
+  today: isoDate,
+});
+
+export const reorderBody = z.object({
+  /** Every lesson entry in the planner, in the new order. */
+  entryIds: z.array(z.string().min(1).max(64)).min(1).max(1000),
 });
 
 export const newTask = z.object({

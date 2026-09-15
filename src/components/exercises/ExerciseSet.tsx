@@ -34,21 +34,21 @@ function QuestionCard({
 }
 
 export function ExerciseSet({
-  dayNumber,
+  lessonId,
   group,
 }: {
-  dayNumber: number;
+  lessonId: string;
   group: ExerciseGroup;
 }) {
   const { t } = useSettings();
-  const { recordExercise, getDay } = useProgress();
+  const { recordExercise, getProgress } = useProgress();
 
   const listQuestions = useMemo(
     () => group.questions.filter((q) => q.kind !== "conjugation"),
     [group],
   );
 
-  const prior = getDay(dayNumber).exercises.find((e) => e.setId === group.id);
+  const prior = getProgress(lessonId).exercises.find((e) => e.setId === group.id);
 
   const [index, setIndex] = useState(0);
   const [graded, setGraded] = useState(false);
@@ -65,7 +65,7 @@ export function ExerciseSet({
           group={group}
           onFinish={(r) => {
             if (r.total > 0)
-              recordExercise(dayNumber, { setId: group.id, ...r, scored: false });
+              recordExercise(lessonId, { setId: group.id, ...r, scored: false });
             setRunKey((k) => k + 1);
           }}
         />
@@ -84,7 +84,7 @@ export function ExerciseSet({
 
   function advance() {
     if (isLast) {
-      recordExercise(dayNumber, {
+      recordExercise(lessonId, {
         setId: group.id,
         correct: correctCount,
         total,

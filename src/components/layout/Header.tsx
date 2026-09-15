@@ -51,6 +51,7 @@ export function Header() {
         <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto sm:gap-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavLink href="/" label={t(STR.nav_dashboard)} />
           <NavLink href="/planner" label={t(STR.nav_planner)} />
+          <NavLink href="/lessons" label={t(STR.nav_lessons)} />
           <NavLink href="/practice" label={t(STR.nav_practice)} />
         </nav>
 

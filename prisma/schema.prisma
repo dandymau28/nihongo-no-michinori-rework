@@ -25,12 +25,13 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
-  sessions      Session[]
-  accounts      Account[]
-  planSettings  PlanSettings?
-  planEntries   PlanEntry[]
-  dayProgress   DayProgress[]
-  practiceStats PracticeStats[]
+  sessions       Session[]
+  accounts       Account[]
+  planSettings   PlanSettings?
+  planEntries    PlanEntry[]
+  lessonProgress LessonProgress[]
+  dayProgress    DayProgress[]
+  practiceStats  PracticeStats[]
 
   @@map("user")
 }
@@ -83,17 +84,21 @@ model Verification {
 }
 
 // ---------------------------------------------------------------------------
-// Personal planner
+// Planner (one per learner)
 // ---------------------------------------------------------------------------
 
-/// One per learner: how their plan is laid out on the calendar.
+/// The learner's planner: where it came from and how it's laid out on the calendar.
 model PlanSettings {
   userId    String   @id @map("user_id")
+  /// Custom name; null = the preset's title (or "My planner" for a custom planner)
+  name      String?
+  /// Preset it was started from (src/data/presets.ts); null = built from scratch
+  presetId  String?  @map("preset_id")
   /// ISO YYYY-MM-DD
   startDate String   @map("start_date")
   /// Weekday bitmask, bit 0 = Sunday … bit 6 = Saturday
   studyDays Int      @default(127) @map("study_days")
-  /// Lessons per study day when (re)building the schedule
+  /// Lessons per study day when laying lessons out
   perDay    Int      @default(1) @map("per_day")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -102,25 +107,32 @@ model PlanSettings {
   @@map("plan_settings")
 }
 
-/// A scheduled item: either a built-in lesson (`materialDay` = its day number in
-/// the 90-day plan) or a learner-created custom task (`materialDay` null).
+/// A planner item: a catalog lesson (`lessonId`) or a learner-created custom task (`lessonId` null).
 model PlanEntry {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
+  /// Lesson id from src/data/lessons.ts; null for a custom task
+  lessonId    String?  @map("lesson_id")
+  /// The lesson's place in the learner's order (custom tasks: null)
+  position    Int?
+  /// LEGACY — the lesson's day in the old 90-day plan. Still written so the previous release
+  /// works after a rollback; removed by a later migration.
   materialDay Int?     @map("material_day")
   title       String?
   note        String?
   /// ISO YYYY-MM-DD
   date        String?
   skipped     Boolean  @default(false)
-  /// Custom tasks only — lessons take their status from DayProgress
+  /// Custom tasks only — lessons take their status from LessonProgress
   done        Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, lessonId])
   @@unique([userId, materialDay])
   @@index([userId, date])
+  @@index([userId, position])
   @@map("plan_entry")
 }
 
@@ -128,6 +140,23 @@ model PlanEntry {
 // Progress
 // ---------------------------------------------------------------------------
 
+/// Progress on one lesson — shared by every planner and by taking the lesson on its own.
+model LessonProgress {
+  userId    String   @map("user_id")
+  lessonId  String   @map("lesson_id")
+  status    String   @default("not-yet")
+  reviewed  Boolean  @default(false)
+  notes     String   @default("")
+  exercises Json     @default("[]")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lessonId])
+  @@map("lesson_progress")
+}
+
+/// LEGACY — progress by day number in the old 90-day plan. Still written for lessons that have
+/// a legacy day so the previous release works after a rollback; removed by a later migration.
 model DayProgress {
   userId    String   @map("user_id")
   /// Lesson day number (1..90)

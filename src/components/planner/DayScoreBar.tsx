@@ -9,32 +9,32 @@ import { STR } from "@/lib/strings";
 import { cn } from "@/lib/cn";
 
 /**
- * Sticky, always-visible counter that rolls up every graded exercise on the day.
- * Also promotes the day to "done" once every exercise (graded + practice) is finished.
+ * Sticky, always-visible counter that rolls up every graded exercise in the lesson.
+ * Also marks the lesson "done" once every exercise (graded + practice) is finished.
  */
 export function DayScoreBar({
-  dayNumber,
-  lessonSlug,
+  lessonId,
+  contentSlug,
 }: {
-  dayNumber: number;
-  lessonSlug?: string;
+  lessonId: string;
+  contentSlug?: string;
 }) {
   const { t } = useSettings();
-  const { getDay, setStatus, hydrated } = useProgress();
-  const module = getContent(lessonSlug);
-  const progress = getDay(dayNumber);
+  const { getProgress, setStatus, hydrated } = useProgress();
+  const module = getContent(contentSlug);
+  const progress = getProgress(lessonId);
   const score = computeDayScore(module, progress.exercises);
 
   // Promote to "done" only on the transition to all-complete, so the learner
-  // can still manually move a finished day back to another status afterwards.
+  // can still manually move a finished lesson back to another status afterwards.
   const wasComplete = useRef(false);
   useEffect(() => {
     if (!hydrated) return;
     if (score.allComplete && !wasComplete.current && progress.status !== "done") {
-      setStatus(dayNumber, "done");
+      setStatus(lessonId, "done");
     }
     wasComplete.current = score.allComplete;
-  }, [hydrated, score.allComplete, progress.status, dayNumber, setStatus]);
+  }, [hydrated, score.allComplete, progress.status, lessonId, setStatus]);
 
   if (score.totalSets === 0) return null;
 

@@ -17,7 +17,7 @@ const notoSansJp = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: "Nihongo No Michinori · 日本語の道のり",
   description:
-    "A JLPT N5→N4 study site: a personal 90-day planner with built-in lessons, drills, and mock tests.",
+    "A JLPT N5–N1 study site: follow a ready-made study plan or build your own planner from single lessons, with drills and mock tests built in.",
 };
 
 export const viewport: Viewport = {

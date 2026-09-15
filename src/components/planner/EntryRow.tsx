@@ -5,16 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useProgress } from "@/context/ProgressContext";
 import { usePlan } from "@/context/PlanContext";
-import { getDay as getMaterial } from "@/data/planner";
+import { getLesson } from "@/data/lessons";
 import { TYPE_LABEL } from "@/lib/labels";
 import { quickPct } from "@/lib/dayScore";
 import { formatDate } from "@/lib/dates";
 import { ALL_WEEKDAYS, isISODate, shiftStudyDays } from "@/lib/schedule";
 import type { PlanEntry } from "@/lib/planTypes";
-import { TYPE_ICON, StatusDot } from "@/components/ui/Pill";
+import { LevelPill, TYPE_ICON, StatusDot } from "@/components/ui/Pill";
 import { cn } from "@/lib/cn";
 
-/** One planner item — a built-in lesson or a custom task — with its reschedule menu. */
+/** One planner item — a catalog lesson or a custom task — with its reschedule menu. */
 export function EntryRow({
   entry,
   isToday,
@@ -27,9 +27,9 @@ export function EntryRow({
   onEditTask?: (task: PlanEntry) => void;
 }) {
   const { t, lang } = useSettings();
-  const { getDay: getProgress } = useProgress();
-  const { isPreview, updateEntry } = usePlan();
-  const material = entry.materialDay != null ? getMaterial(entry.materialDay) : undefined;
+  const { getProgress } = useProgress();
+  const { updateEntry } = usePlan();
+  const lesson = getLesson(entry.lessonId);
 
   const rowCls = cn(
     "flex items-center rounded-xl border transition-colors",
@@ -41,43 +41,46 @@ export function EntryRow({
     <div className="w-14 shrink-0 text-xs text-muted">{formatDate(entry.date, lang)}</div>
   );
 
-  if (material) {
-    const progress = getProgress(material.day);
+  if (entry.lessonId != null) {
+    if (!lesson) {
+      return (
+        <div className={rowCls}>
+          <p className="min-w-0 flex-1 px-3 py-2.5 text-sm text-muted">
+            {t({ en: "This lesson is no longer available.", id: "Materi ini sudah tidak tersedia." })}
+          </p>
+          <EntryActions entry={entry} />
+        </div>
+      );
+    }
+    const progress = getProgress(lesson.id);
     const pct = quickPct(progress.exercises);
     return (
       <div className={rowCls}>
         <Link
-          href={`/day/${material.day}`}
+          href={`/lessons/${lesson.id}`}
           className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
         >
-          <div className="flex w-10 shrink-0 flex-col items-center">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted">
-              {t({ en: "Day", id: "Hari" })}
-            </span>
-            <span className="text-lg font-bold leading-none tabular-nums">{material.day}</span>
+          <div className="flex w-10 shrink-0 justify-center">
+            <LevelPill level={lesson.level} />
           </div>
           {dateCell}
           <span className="shrink-0 text-base" aria-hidden>
-            {TYPE_ICON[material.type]}
+            {TYPE_ICON[lesson.type]}
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">
-              {material.titleJa ? (
-                <span className="font-jp">{material.titleJa}</span>
-              ) : (
-                t(material.title)
-              )}
+              {lesson.titleJa ? <span className="font-jp">{lesson.titleJa}</span> : t(lesson.title)}
             </p>
-            <p className="truncate text-xs text-muted">{t(TYPE_LABEL[material.type])}</p>
+            <p className="truncate text-xs text-muted">
+              {lesson.titleJa ? t(lesson.title) : t(TYPE_LABEL[lesson.type])}
+            </p>
           </div>
           {pct != null && (
-            <span className="hidden shrink-0 text-xs text-muted tabular-nums sm:block">
-              {pct}%
-            </span>
+            <span className="hidden shrink-0 text-xs text-muted tabular-nums sm:block">{pct}%</span>
           )}
           <StatusDot status={progress.status} />
         </Link>
-        {!isPreview && <EntryActions entry={entry} />}
+        <EntryActions entry={entry} />
       </div>
     );
   }
@@ -120,7 +123,7 @@ function EntryActions({
   onEdit?: (task: PlanEntry) => void;
 }) {
   const { t } = useSettings();
-  const { settings, today, updateEntry, deleteTask } = usePlan();
+  const { settings, today, updateEntry, removeEntry } = usePlan();
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -136,7 +139,7 @@ function EntryActions({
   }, [open, entry.date, today]);
 
   const mask = settings?.studyDays ?? ALL_WEEKDAYS;
-  const isTask = entry.materialDay == null;
+  const isTask = entry.lessonId == null;
 
   function act(fn: () => unknown) {
     setOpen(false);
@@ -227,7 +230,7 @@ function EntryActions({
                 onClick={() =>
                   act(() => {
                     if (confirm(t({ en: "Delete this task?", id: "Hapus tugas ini?" }))) {
-                      return deleteTask(entry.id);
+                      return removeEntry(entry.id);
                     }
                   })
                 }
@@ -236,14 +239,22 @@ function EntryActions({
               </button>
             </>
           ) : (
-            !entry.skipped && (
+            <>
+              {!entry.skipped && (
+                <button
+                  className={cn(item, "text-muted")}
+                  onClick={() => act(() => updateEntry(entry.id, { skipped: true }))}
+                >
+                  {t({ en: "Skip this lesson", id: "Lewati materi ini" })}
+                </button>
+              )}
               <button
                 className={cn(item, "text-muted")}
-                onClick={() => act(() => updateEntry(entry.id, { skipped: true }))}
+                onClick={() => act(() => removeEntry(entry.id))}
               >
-                {t({ en: "Skip this lesson", id: "Lewati materi ini" })}
+                {t({ en: "Remove from planner", id: "Hapus dari planner" })}
               </button>
-            )
+            </>
           )}
         </div>
       )}

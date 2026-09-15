@@ -10,16 +10,16 @@ import {
   useState,
 } from "react";
 import type {
-  DayProgress,
   ExerciseResult,
+  LessonProgress,
   ProgressMap,
   Status,
 } from "@/lib/types";
-import { emptyDayProgress } from "@/lib/types";
+import { emptyLessonProgress } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 
-const EXPORT_VERSION = 1;
+const EXPORT_VERSION = 2;
 const SAVE_DELAY = 600;
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
@@ -29,13 +29,14 @@ type ProgressContextValue = {
   /** Signed in: changes are saved to the account. Guest progress lasts until reload. */
   canSave: boolean;
   saveState: SaveState;
-  getDay: (day: number) => DayProgress;
-  setStatus: (day: number, status: Status) => void;
-  setNotes: (day: number, notes: string) => void;
-  setReviewed: (day: number, reviewed: boolean) => void;
-  recordExercise: (day: number, result: Omit<ExerciseResult, "at">) => void;
+  /** Progress on a lesson — shared by the planner and by opening the lesson on its own. */
+  getProgress: (lessonId: string) => LessonProgress;
+  setStatus: (lessonId: string, status: Status) => void;
+  setNotes: (lessonId: string, notes: string) => void;
+  setReviewed: (lessonId: string, reviewed: boolean) => void;
+  recordExercise: (lessonId: string, result: Omit<ExerciseResult, "at">) => void;
   completedCount: number;
-  doneDays: Set<number>;
+  doneLessons: Set<string>;
   resetAll: () => Promise<void>;
   exportJSON: () => string;
   importJSON: (raw: string) => Promise<boolean>;
@@ -55,31 +56,31 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const userRef = useRef(userId);
   /** Only save once the account's progress has loaded, so a failed load never overwrites it. */
   const canWrite = useRef(false);
-  const dirty = useRef(new Set<number>());
+  const dirty = useRef(new Set<string>());
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mapRef.current = map;
   }, [map]);
 
-  /** PUT every changed day. `keepalive` lets the request outlive a closing tab. */
+  /** PUT every changed lesson. `keepalive` lets the request outlive a closing tab. */
   const flush = useCallback(async (keepalive = false) => {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
     const uid = userRef.current;
-    const days = [...dirty.current];
+    const lessonIds = [...dirty.current];
     dirty.current.clear();
-    if (!uid || days.length === 0) return;
+    if (!uid || lessonIds.length === 0) return;
     if (!keepalive) setSaveState("saving");
     try {
       await Promise.all(
-        days.map(async (day) => {
-          const res = await fetch(`/api/progress/${day}`, {
+        lessonIds.map(async (lessonId) => {
+          const res = await fetch(`/api/progress/${encodeURIComponent(lessonId)}`, {
             method: "PUT",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(mapRef.current[day] ?? emptyDayProgress()),
+            body: JSON.stringify(mapRef.current[lessonId] ?? emptyLessonProgress()),
             keepalive,
           });
           if (!res.ok) throw new Error(String(res.status));
@@ -88,7 +89,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       if (userRef.current === uid) setSaveState("saved");
     } catch {
       if (userRef.current !== uid) return;
-      days.forEach((d) => dirty.current.add(d)); // retried with the next change
+      lessonIds.forEach((id) => dirty.current.add(id)); // retried with the next change
       setSaveState("error");
     }
   }, []);
@@ -138,61 +139,60 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     };
   }, [flush]);
 
-  const mutateDay = useCallback(
-    (day: number, fn: (d: DayProgress) => DayProgress) => {
+  const mutate = useCallback(
+    (lessonId: string, fn: (p: LessonProgress) => LessonProgress) => {
       setMap((prev) => {
-        const current = prev[day] ?? emptyDayProgress();
-        return { ...prev, [day]: fn({ ...current }) };
+        const current = prev[lessonId] ?? emptyLessonProgress();
+        return { ...prev, [lessonId]: fn({ ...current }) };
       });
       if (!canWrite.current) return;
-      dirty.current.add(day);
+      dirty.current.add(lessonId);
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => void flush(), SAVE_DELAY);
     },
     [flush],
   );
 
-  const getDay = useCallback(
-    (day: number): DayProgress => map[day] ?? emptyDayProgress(),
+  const getProgress = useCallback(
+    (lessonId: string): LessonProgress => map[lessonId] ?? emptyLessonProgress(),
     [map],
   );
 
   const recordExercise = useCallback(
-    (day: number, result: Omit<ExerciseResult, "at">) => {
-      mutateDay(day, (d) => {
-        const others = d.exercises.filter((e) => e.setId !== result.setId);
-        const next: DayProgress = {
-          ...d,
+    (lessonId: string, result: Omit<ExerciseResult, "at">) => {
+      mutate(lessonId, (p) => {
+        const others = p.exercises.filter((e) => e.setId !== result.setId);
+        const next: LessonProgress = {
+          ...p,
           exercises: [...others, { ...result, at: Date.now() }],
         };
-        // Starting the exercises moves an untouched day to "in progress".
+        // Starting the exercises moves an untouched lesson to "in progress".
         if (next.status === "not-yet") next.status = "partial";
         return next;
       });
     },
-    [mutateDay],
+    [mutate],
   );
 
   const hydrated = !loading && loadedFor === userId;
 
   const value = useMemo<ProgressContextValue>(() => {
-    const doneDays = new Set(
+    const doneLessons = new Set(
       Object.entries(map)
         .filter(([, p]) => p.status === "done")
-        .map(([k]) => Number(k)),
+        .map(([id]) => id),
     );
     return {
       hydrated,
       canSave: userId != null,
       saveState,
-      getDay,
-      setStatus: (day, status) => mutateDay(day, (d) => ({ ...d, status })),
-      setNotes: (day, notes) => mutateDay(day, (d) => ({ ...d, notes })),
-      setReviewed: (day, reviewed) =>
-        mutateDay(day, (d) => ({ ...d, reviewed })),
+      getProgress,
+      setStatus: (lessonId, status) => mutate(lessonId, (p) => ({ ...p, status })),
+      setNotes: (lessonId, notes) => mutate(lessonId, (p) => ({ ...p, notes })),
+      setReviewed: (lessonId, reviewed) => mutate(lessonId, (p) => ({ ...p, reviewed })),
       recordExercise,
-      completedCount: doneDays.size,
-      doneDays,
+      completedCount: doneLessons.size,
+      doneLessons,
       resetAll: async () => {
         if (userRef.current) await api("/api/progress", { method: "DELETE" });
         dirty.current.clear();
@@ -215,6 +215,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         }
         if (!next || typeof next !== "object") return false;
         try {
+          // Older exports are keyed by day number; the server maps those to lessons.
           const r = await api<{ progress: ProgressMap }>("/api/progress", {
             method: "POST",
             body: { progress: next },
@@ -228,7 +229,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         }
       },
     };
-  }, [map, hydrated, userId, saveState, getDay, mutateDay, recordExercise]);
+  }, [map, hydrated, userId, saveState, getProgress, mutate, recordExercise]);
 
   return (
     <ProgressContext.Provider value={value}>

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import type { Status, DayType, Phase } from "@/lib/types";
+import type { JlptLevel, LessonType, Status } from "@/lib/types";
+
+type Tone = "neutral" | "primary" | "accent" | "success" | "warning";
 
 export function Pill({
   children,
@@ -9,7 +11,7 @@ export function Pill({
 }: {
   children: ReactNode;
   className?: string;
-  tone?: "neutral" | "primary" | "accent" | "success" | "warning";
+  tone?: Tone;
 }) {
   const tones = {
     neutral: "bg-surface-2 text-muted",
@@ -50,7 +52,7 @@ export function statusTone(status: Status) {
   return STATUS_TONE[status];
 }
 
-export const TYPE_ICON: Record<DayType, string> = {
+export const TYPE_ICON: Record<LessonType, string> = {
   diagnostic: "🩺",
   grammar: "✏️",
   "vocab-kanji": "🈶",
@@ -61,8 +63,18 @@ export const TYPE_ICON: Record<DayType, string> = {
   skill: "🧩",
 };
 
-export const PHASE_TONE: Record<Phase, "primary" | "accent" | "warning"> = {
-  "n5-refresher": "primary",
-  "n4-core": "accent",
-  "exam-sprint": "warning",
+export const LEVEL_TONE: Record<JlptLevel, Tone> = {
+  N5: "primary",
+  N4: "accent",
+  N3: "warning",
+  N2: "success",
+  N1: "neutral",
 };
+
+export function LevelPill({ level, className }: { level: JlptLevel; className?: string }) {
+  return (
+    <Pill tone={LEVEL_TONE[level]} className={cn("tabular-nums", className)}>
+      {level}
+    </Pill>
+  );
+}

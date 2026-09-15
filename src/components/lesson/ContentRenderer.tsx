@@ -10,24 +10,25 @@ import { SkillView } from "./SkillView";
 
 export function ContentRenderer({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: ContentModule;
-  dayNumber: number;
+  /** Catalog lesson whose progress the exercises record into. */
+  lessonId: string;
 }) {
   switch (module.type) {
     case "lesson":
-      return <LessonView lesson={module} dayNumber={dayNumber} />;
+      return <LessonView lesson={module} lessonId={lessonId} />;
     case "test":
-      return <TestRunner module={module} dayNumber={dayNumber} />;
+      return <TestRunner module={module} lessonId={lessonId} />;
     case "reading":
-      return <ReadingRunner module={module} dayNumber={dayNumber} />;
+      return <ReadingRunner module={module} lessonId={lessonId} />;
     case "listening":
-      return <ListeningRunner module={module} dayNumber={dayNumber} />;
+      return <ListeningRunner module={module} lessonId={lessonId} />;
     case "deck":
-      return <DeckRunner module={module} dayNumber={dayNumber} />;
+      return <DeckRunner module={module} lessonId={lessonId} />;
     case "skill":
-      return <SkillView module={module} dayNumber={dayNumber} />;
+      return <SkillView module={module} lessonId={lessonId} />;
     default:
       return null;
   }

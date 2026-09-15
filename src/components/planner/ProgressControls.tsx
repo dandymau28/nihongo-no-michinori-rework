@@ -14,16 +14,16 @@ import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { cn } from "@/lib/cn";
 
 export function ProgressControls({
-  day,
-  lessonSlug,
+  lessonId,
+  contentSlug,
 }: {
-  day: number;
-  lessonSlug?: string;
+  lessonId: string;
+  contentSlug?: string;
 }) {
   const { t } = useSettings();
-  const { getDay, setStatus, setNotes, setReviewed, canSave, saveState } = useProgress();
-  const p = getDay(day);
-  const score = computeDayScore(getContent(lessonSlug), p.exercises);
+  const { getProgress, setStatus, setNotes, setReviewed, canSave, saveState } = useProgress();
+  const p = getProgress(lessonId);
+  const score = computeDayScore(getContent(contentSlug), p.exercises);
 
   // Flash "Saved ✓" briefly after each successful save.
   const [savedFlash, setSavedFlash] = useState(false);
@@ -118,7 +118,7 @@ export function ProgressControls({
             </label>
             <Segmented
               value={p.status}
-              onChange={(s: Status) => setStatus(day, s)}
+              onChange={(s: Status) => setStatus(lessonId, s)}
               options={(["not-yet", "partial", "done"] as Status[]).map((s) => ({
                 value: s,
                 label: t(STATUS_LABEL[s]),
@@ -130,7 +130,7 @@ export function ProgressControls({
             <input
               type="checkbox"
               checked={p.reviewed}
-              onChange={(e) => setReviewed(day, e.target.checked)}
+              onChange={(e) => setReviewed(lessonId, e.target.checked)}
               className="size-4 accent-[var(--primary)]"
             />
             <span>{t(STR.reviewed_label)}</span>
@@ -142,7 +142,7 @@ export function ProgressControls({
             </span>
             <textarea
               value={p.notes}
-              onChange={(e) => setNotes(day, e.target.value)}
+              onChange={(e) => setNotes(lessonId, e.target.value)}
               placeholder={t(STR.notes_ph)}
               rows={3}
               className="w-full resize-y rounded-xl border border-border bg-surface px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
@@ -152,8 +152,8 @@ export function ProgressControls({
       ) : (
         <SignInPrompt
           message={{
-            en: "Your scores on this page disappear when you leave. Sign in to save them, mark the day done and keep notes.",
-            id: "Skor di halaman ini hilang saat kamu pergi. Masuk untuk menyimpannya, menandai hari selesai, dan menulis catatan.",
+            en: "Your scores on this page disappear when you leave. Sign in to save them, mark the lesson done and keep notes.",
+            id: "Skor di halaman ini hilang saat kamu pergi. Masuk untuk menyimpannya, menandai materi selesai, dan menulis catatan.",
           }}
         />
       )}

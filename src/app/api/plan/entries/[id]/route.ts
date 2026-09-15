@@ -7,7 +7,7 @@ import {
   readJson,
   unauthorized,
 } from "@/lib/server/http";
-import { toEntry } from "@/lib/server/plan";
+import { LONG_TX, loadPlan, relayUnfinishedLessons, toEntry } from "@/lib/server/plan";
 import { entryPatch } from "@/lib/server/schemas";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -24,7 +24,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!entry) return notFound();
 
   const p = parsed.data;
-  const isTask = entry.materialDay == null;
+  const isTask = entry.lessonId == null;
   const data: {
     date?: string | null;
     skipped?: boolean;
@@ -48,7 +48,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
   return json(toEntry(row));
 }
 
-/** Delete a custom task. Lessons can only be skipped. */
+/**
+ * Remove a custom task, or take a lesson out of the planner (its progress is kept).
+ * Removing a lesson lays the unfinished lessons out again so the order has no gap.
+ * Responds with the whole planner.
+ */
 export async function DELETE(_req: Request, { params }: Ctx) {
   const userId = await currentUserId();
   if (!userId) return unauthorized();
@@ -56,8 +60,14 @@ export async function DELETE(_req: Request, { params }: Ctx) {
 
   const entry = await prisma.planEntry.findFirst({ where: { id, userId } });
   if (!entry) return notFound();
-  if (entry.materialDay != null) return badRequest("lessons can be skipped, not deleted");
 
-  await prisma.planEntry.delete({ where: { id } });
-  return json({ ok: true });
+  if (entry.lessonId == null) {
+    await prisma.planEntry.delete({ where: { id } });
+  } else {
+    await prisma.$transaction(async (tx) => {
+      await tx.planEntry.delete({ where: { id } });
+      await relayUnfinishedLessons(tx, userId);
+    }, LONG_TX);
+  }
+  return json(await loadPlan(userId));
 }

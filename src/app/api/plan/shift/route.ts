@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
-import { loadPlan } from "@/lib/server/plan";
+import { doneLessonIds, loadPlan } from "@/lib/server/plan";
 import { shiftBody } from "@/lib/server/schemas";
 import { shiftStudyDays } from "@/lib/schedule";
 
@@ -18,14 +18,11 @@ export async function POST(req: Request) {
   const settings = await prisma.planSettings.findUnique({ where: { userId } });
   if (!settings) return badRequest("plan not set up");
 
-  const [rows, doneRows] = await Promise.all([
+  const [rows, done] = await Promise.all([
     prisma.planEntry.findMany({ where: { userId, skipped: false, date: { gte: from } } }),
-    prisma.dayProgress.findMany({ where: { userId, status: "done" }, select: { day: true } }),
+    doneLessonIds(prisma, userId),
   ]);
-  const doneDays = new Set(doneRows.map((r) => r.day));
-  const moves = rows.filter((r) =>
-    r.materialDay != null ? !doneDays.has(r.materialDay) : !r.done,
-  );
+  const moves = rows.filter((r) => (r.lessonId != null ? !done.has(r.lessonId) : !r.done));
 
   if (by !== 0 && moves.length > 0) {
     await prisma.$transaction(

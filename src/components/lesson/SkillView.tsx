@@ -14,15 +14,15 @@ import { LessonSectionList } from "./LessonSectionList";
 
 export function SkillView({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: SkillModule;
-  dayNumber: number;
+  lessonId: string;
 }) {
   const { t, lang } = useSettings();
-  const { getDay, setStatus, recordExercise } = useProgress();
+  const { getProgress, setStatus, recordExercise } = useProgress();
   const [text, setText] = useState("");
-  const done = getDay(dayNumber).exercises.some((e) => e.setId === `${module.slug}:writing`);
+  const done = getProgress(lessonId).exercises.some((e) => e.setId === `${module.slug}:writing`);
 
   return (
     <div className="space-y-6">
@@ -38,7 +38,7 @@ export function SkillView({
       <LessonSectionList sections={module.sections} />
 
       {module.exercises?.map((g) => (
-        <ExerciseSet key={g.id} dayNumber={dayNumber} group={g} />
+        <ExerciseSet key={g.id} lessonId={lessonId} group={g} />
       ))}
 
       {module.writing && (
@@ -86,13 +86,13 @@ export function SkillView({
             size="sm"
             variant={done ? "secondary" : "primary"}
             onClick={() => {
-              recordExercise(dayNumber, {
+              recordExercise(lessonId, {
                 setId: `${module.slug}:writing`,
                 correct: 1,
                 total: 1,
                 scored: false,
               });
-              if (getDay(dayNumber).status !== "done") setStatus(dayNumber, "partial");
+              if (getProgress(lessonId).status !== "done") setStatus(lessonId, "partial");
             }}
           >
             {done ? `${t(STR.saved)} ✓` : t(STR.ex_mark_done)}

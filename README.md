@@ -1,24 +1,29 @@
 # Nihongo No Michinori · 日本語の道のり
 
-A JLPT **N5 → N4** study site built from a 90-day study planner — now with **accounts**,
-so every learner tracks their own progress and arranges their own plan. Each lesson of
-the plan has its drills, reading, listening, or mock test **built into the site**.
+A JLPT study site for every level, **N5 to N1**, with **accounts** so every learner tracks
+their own progress and arranges their own plan. Lessons come with their drills, reading,
+listening, or mock tests **built into the site**. N5 and N4 lessons are available now; N3,
+N2 and N1 lessons are added to the same catalog later.
 
 - **Accounts** — email + password or Google sign-in (better-auth), with email
   confirmation, password reset and a "Keep me signed in" option (30-day sessions, or a
   browser-session login for shared computers). Anyone can browse lessons, the default
   plan and the practice tools; **tracking requires signing in** (guest scores last only
   until the page is left).
-- **Personal planner** — each learner sets a start date, their study weekdays and a pace
-  (lessons per study day), and the 90 built-in lessons are laid out on their calendar.
-  From there they can:
-  - move any lesson to another date (e.g. do Day 2 and Day 3 on the same day), one study
-    day earlier/later, or to today;
-  - skip lessons and restore them later;
-  - add their own custom tasks with a note, tick them off, edit or delete them;
-  - push everything unfinished forward in one click when they fall behind
-    ("Resume from today");
-  - rebuild the schedule from new settings at any time.
+- **Lesson catalog** — every lesson stands on its own, tagged with its JLPT level and type.
+  Learners can open any lesson from the **Lessons** library and study it without a planner.
+- **Planner presets** — ready-made sequences of catalog lessons: *90-day N5 → N4*, *N5
+  Refresher*, *N4 Grammar Core* and *N4 Exam Sprint*.
+- **Personal planner** (one per learner) — started from a preset or built from single
+  lessons. The learner sets a start date, study weekdays and a pace, and can:
+  - rearrange the lesson order (drag or arrows) — unfinished lessons get new dates in the
+    new order, finished ones keep theirs;
+  - add lessons from any level, remove them, or skip and restore them;
+  - move any lesson to another date, one study day earlier/later, or to today;
+  - add custom tasks with a note, tick them off, edit or delete them;
+  - push everything unfinished forward in one click ("Resume from today");
+  - rebuild the schedule, or start a different planner (lesson progress is kept).
+- **Progress per lesson** — shared by the planner and by opening a lesson on its own.
 - **Interactive exercises**: multiple choice, fill-in-the-blank, sentence building, timed
   conjugation streaks, flashcard decks, reading comprehension, and listening.
 - **Automatic day score** — graded exercises roll into one live percentage per lesson;
@@ -83,39 +88,49 @@ rebuild. The scripts live in `scripts/`, the systemd template in `deploy/`.
 ```
 prisma/
   schema.prisma            User/Session/Account/Verification (better-auth),
-                           PlanSettings, PlanEntry, DayProgress, PracticeStats
+                           PlanSettings, PlanEntry, LessonProgress, PracticeStats
+                           (+ legacy DayProgress, see below)
   migrations/
 src/
+  data/
+    lessons.ts             the lesson catalog — permanent ids, level, type, links
+    presets.ts             planner presets: ordered lesson ids grouped into stages
+  content/                 built-in lesson content, looked up by a lesson's contentSlug
   app/
-    page.tsx               Dashboard (guest welcome · plan setup · today / overdue / up next)
-    planner/               Personal calendar: filters, move/skip, custom tasks, plan settings
-    day/[day]/             One lesson: schedule card, content, exercises, progress
-    lesson/[slug]/  practice/  settings/  about/
-    login/  register/      Email + Google sign-in
+    page.tsx               Dashboard (guest welcome · today / overdue / progress by stage)
+    lessons/               Lesson library (by level) and /lessons/<id> lesson pages
+    planner/               Start screen (presets / build your own), Calendar and Order views
+    day/[day]/  lesson/[slug]/   redirects from the old 90-day URLs
+    practice/  settings/  about/  login/  register/  …
     api/
       auth/[...all]        better-auth handler
-      plan/                GET plan · PUT settings (+ rebuild)
-      plan/entries[/id]    POST custom task · PATCH move/skip/edit · DELETE task
+      plan/                GET planner · POST start/replace (preset or lessons) · PUT settings
+      plan/lessons         add lessons to the end
+      plan/reorder         save a new order (dates follow it)
+      plan/entries[/id]    POST custom task · PATCH move/skip/edit · DELETE task or lesson
       plan/shift           push unfinished entries forward by N study days
-      progress[/day]       GET all · PUT one lesson · POST import · DELETE reset
+      progress[/lesson]    GET all · PUT one lesson · POST import · DELETE reset
       practice/[key]       trainer stats
+      health               release id + database check (deploys, uptime monitors)
   context/
     SettingsContext.tsx    lang / theme / furigana / romaji (localStorage, per device)
-    ProgressContext.tsx    per-lesson progress; debounced saves to /api/progress
-    PlanContext.tsx        the learner's schedule (guests get a read-only preview)
+    ProgressContext.tsx    progress per lesson id; debounced saves to /api/progress
+    PlanContext.tsx        the learner's planner
   lib/
-    schedule.ts            pure date maths: study days, shifting, building a schedule
-    server/                prisma client, auth config, zod schemas, API helpers
-    useSyncedJson.ts       account-backed state for the practice trainers
-  data/  content/          the 90-day plan and all lesson content (unchanged)
+    schedule.ts            pure date maths: study days, shifting, laying out lessons
+    server/                prisma client, auth, zod schemas, planner helpers
   components/
-    auth/                  AuthForm, AccountMenu, SignInPrompt
-    planner/               PlannerView, EntryRow, PlanSettingsForm, TaskModal,
-                           OverdueBanner, ScheduleCard, DayDetail, …
+    lessons/               LessonLibrary, LessonDetail
+    planner/               PlannerView (calendar), PlannerOrder, PlannerStart,
+                           LessonPickerModal, EntryRow, PlanSettingsForm, …
 ```
 
-Lessons keep their identity as **Day 1–90** of the built-in plan (their content and
-progress are keyed by that number); a learner's `PlanEntry` rows decide *when* each one
-is studied.
+A lesson's `id` is permanent: progress and planners are stored against it. A planner is a
+list of `PlanEntry` rows — each lesson has a `position` (the learner's order) and a date.
+
+**Pending cleanup:** migration `0003_lesson_catalog` moved everything from day numbers to
+lesson ids but kept `plan_entry.material_day` and the `day_progress` table (still written)
+so the previous release keeps working during a deploy or rollback. A later release should
+stop writing them and drop them in its own migration.
 
 See [`docs/authoring.md`](docs/authoring.md) for adding lesson content.

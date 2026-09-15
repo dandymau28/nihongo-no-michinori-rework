@@ -1,26 +1,14 @@
-import { notFound } from "next/navigation";
-import { AUTHORED_SLUGS, getContent } from "@/content/registry";
-import { PLANNER } from "@/data/planner";
-import { ContentRenderer } from "@/components/lesson/ContentRenderer";
+import { notFound, permanentRedirect } from "next/navigation";
+import { LESSONS } from "@/data/lessons";
 
-export function generateStaticParams() {
-  return [...AUTHORED_SLUGS].map((slug) => ({ slug }));
-}
-
-export default async function LessonPage({
+/** The old content-only view (/lesson/<content slug>) now lives at /lessons/<id>. */
+export default async function LegacyContentPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const module = getContent(slug);
-  if (!module) notFound();
-
-  const day = PLANNER.find((d) => d.lessonSlug === slug)?.day ?? 0;
-
-  return (
-    <div className="space-y-6">
-      <ContentRenderer module={module!} dayNumber={day} />
-    </div>
-  );
+  const lesson = LESSONS.find((l) => l.contentSlug === slug);
+  if (!lesson) notFound();
+  permanentRedirect(`/lessons/${lesson.id}`);
 }

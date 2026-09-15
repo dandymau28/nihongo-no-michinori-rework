@@ -6,30 +6,46 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { PLANNER } from "@/data/planner";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import { ALL_WEEKDAYS, buildSchedule, todayISO } from "@/lib/schedule";
-import type { EntryPatch, Plan, PlanEntry, PlanSettings } from "@/lib/planTypes";
-import type { DayProgress } from "@/lib/types";
+import { todayISO } from "@/lib/schedule";
+import type {
+  EntryPatch,
+  NewPlanner,
+  Plan,
+  PlanEntry,
+  PlanSettings,
+  ScheduleSettings,
+} from "@/lib/planTypes";
+import type { LessonProgress } from "@/lib/types";
 
 type PlanContextValue = {
   hydrated: boolean;
-  /** Guests see the default plan laid out from today, read-only. */
-  isPreview: boolean;
-  /** null until a signed-in learner has set up their plan. */
+  signedIn: boolean;
+  /** null until the learner has started a planner. */
   settings: PlanSettings | null;
-  /** Sorted by date; lessons before custom tasks on the same date. */
+  /** Everything, by date; lessons before custom tasks on the same date. */
   entries: PlanEntry[];
+  /** Lessons only, in the learner's order. */
+  lessonEntries: PlanEntry[];
   /** Local ISO date, known only after mount. */
   today: string | null;
-  entryForDay: (day: number) => PlanEntry | undefined;
-  saveSettings: (settings: PlanSettings, rebuild: boolean) => Promise<void>;
+  entryForLesson: (lessonId: string) => PlanEntry | undefined;
+  createPlanner: (planner: NewPlanner) => Promise<void>;
+  saveSettings: (
+    settings: ScheduleSettings & { name?: string | null },
+    rebuild: boolean,
+  ) => Promise<void>;
   updateEntry: (id: string, patch: EntryPatch) => Promise<void>;
   addTask: (task: { title: string; note?: string; date: string }) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
+  /** Delete a custom task, or take a lesson out of the planner. */
+  removeEntry: (id: string) => Promise<void>;
+  addLessons: (lessonIds: string[]) => Promise<void>;
+  /** Save a new lesson order (every lesson entry id). */
+  reorder: (entryIds: string[]) => Promise<void>;
   shift: (from: string, by: number) => Promise<void>;
   error: boolean;
 };
@@ -40,33 +56,26 @@ const PlanContext = createContext<PlanContextValue | null>(null);
 
 export function isEntryDone(
   entry: PlanEntry,
-  getDay: (day: number) => DayProgress,
+  getProgress: (lessonId: string) => LessonProgress,
 ): boolean {
-  return entry.materialDay != null ? getDay(entry.materialDay).status === "done" : entry.done;
+  return entry.lessonId != null ? getProgress(entry.lessonId).status === "done" : entry.done;
 }
 
-function compareEntries(a: PlanEntry, b: PlanEntry): number {
+function byDate(a: PlanEntry, b: PlanEntry): number {
   const da = a.date ?? "9999-99-99";
   const db = b.date ?? "9999-99-99";
   if (da !== db) return da < db ? -1 : 1;
-  const ma = a.materialDay ?? Infinity;
-  const mb = b.materialDay ?? Infinity;
-  if (ma !== mb) return ma - mb;
+  const pa = a.lessonId != null ? (a.position ?? 0) : Infinity;
+  const pb = b.lessonId != null ? (b.position ?? 0) : Infinity;
+  if (pa !== pb) return pa - pb;
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-function previewEntries(today: string): PlanEntry[] {
-  const days = PLANNER.map((d) => d.day);
-  const schedule = buildSchedule(days, today, ALL_WEEKDAYS);
-  return days.map((day) => ({
-    id: `preview-${day}`,
-    materialDay: day,
-    title: null,
-    note: null,
-    date: schedule.get(day)!,
-    skipped: false,
-    done: false,
-  }));
+function byPosition(a: PlanEntry, b: PlanEntry): number {
+  const pa = a.position ?? Infinity;
+  const pb = b.position ?? Infinity;
+  if (pa !== pb) return pa - pb;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
@@ -77,6 +86,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [loadedFor, setLoadedFor] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState(false);
   const [today, setToday] = useState<string | null>(null);
+  const reorderSeq = useRef(0);
+  const reorderChain = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     setToday(todayISO());
@@ -125,10 +136,18 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const saveSettings = useCallback(async (settings: PlanSettings, rebuild: boolean) => {
-    setPlan(await api<Plan>("/api/plan", { method: "PUT", body: { ...settings, rebuild } }));
+  const createPlanner = useCallback(async (planner: NewPlanner) => {
+    setPlan(await api<Plan>("/api/plan", { method: "POST", body: planner }));
     setError(false);
   }, []);
+
+  const saveSettings = useCallback(
+    async (settings: ScheduleSettings & { name?: string | null }, rebuild: boolean) => {
+      setPlan(await api<Plan>("/api/plan", { method: "PUT", body: { ...settings, rebuild } }));
+      setError(false);
+    },
+    [],
+  );
 
   const updateEntry = useCallback(
     async (id: string, patch: EntryPatch) => {
@@ -148,11 +167,11 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setPlan((p) => ({ ...p, entries: [...p.entries, entry] }));
   }, []);
 
-  const deleteTask = useCallback(
+  const removeEntry = useCallback(
     async (id: string) => {
       setPlan((p) => ({ ...p, entries: p.entries.filter((e) => e.id !== id) }));
       try {
-        await api(`/api/plan/entries/${id}`, { method: "DELETE" });
+        setPlan(await api<Plan>(`/api/plan/entries/${id}`, { method: "DELETE" }));
       } catch {
         setError(true);
         await refresh();
@@ -161,19 +180,53 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
+  const addLessons = useCallback(async (lessonIds: string[]) => {
+    setPlan(
+      await api<Plan>("/api/plan/lessons", {
+        method: "POST",
+        body: { lessonIds, today: todayISO() },
+      }),
+    );
+  }, []);
+
+  // Moves apply instantly; requests run one at a time and only the newest result is shown.
+  const reorder = useCallback(
+    async (entryIds: string[]) => {
+      const seq = ++reorderSeq.current;
+      const position = new Map(entryIds.map((id, i) => [id, i]));
+      setPlan((p) => ({
+        ...p,
+        entries: p.entries.map((e) => (position.has(e.id) ? { ...e, position: position.get(e.id)! } : e)),
+      }));
+      const run = reorderChain.current.then(async () => {
+        try {
+          const next = await api<Plan>("/api/plan/reorder", { method: "POST", body: { entryIds } });
+          if (seq === reorderSeq.current) setPlan(next);
+        } catch {
+          if (seq === reorderSeq.current) {
+            setError(true);
+            await refresh();
+          }
+        }
+      });
+      reorderChain.current = run;
+      await run;
+    },
+    [refresh],
+  );
+
   const shift = useCallback(async (from: string, by: number) => {
     setPlan(await api<Plan>("/api/plan/shift", { method: "POST", body: { from, by } }));
   }, []);
 
-  const isPreview = !userId;
-  const entries = useMemo(() => {
-    const list = isPreview ? (today ? previewEntries(today) : []) : plan.entries;
-    return [...list].sort(compareEntries);
-  }, [isPreview, today, plan.entries]);
-
-  const byDay = useMemo(
-    () => new Map(entries.filter((e) => e.materialDay != null).map((e) => [e.materialDay!, e])),
-    [entries],
+  const entries = useMemo(() => [...plan.entries].sort(byDate), [plan.entries]);
+  const lessonEntries = useMemo(
+    () => plan.entries.filter((e) => e.lessonId != null).sort(byPosition),
+    [plan.entries],
+  );
+  const byLesson = useMemo(
+    () => new Map(lessonEntries.map((e) => [e.lessonId!, e])),
+    [lessonEntries],
   );
 
   const hydrated = !loading && loadedFor === userId && today != null;
@@ -181,19 +234,40 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<PlanContextValue>(
     () => ({
       hydrated,
-      isPreview,
+      signedIn: userId != null,
       settings: plan.settings,
       entries,
+      lessonEntries,
       today,
-      entryForDay: (day) => byDay.get(day),
+      entryForLesson: (lessonId) => byLesson.get(lessonId),
+      createPlanner,
       saveSettings,
       updateEntry,
       addTask,
-      deleteTask,
+      removeEntry,
+      addLessons,
+      reorder,
       shift,
       error,
     }),
-    [hydrated, isPreview, plan.settings, entries, today, byDay, saveSettings, updateEntry, addTask, deleteTask, shift, error],
+    [
+      hydrated,
+      userId,
+      plan.settings,
+      entries,
+      lessonEntries,
+      today,
+      byLesson,
+      createPlanner,
+      saveSettings,
+      updateEntry,
+      addTask,
+      removeEntry,
+      addLessons,
+      reorder,
+      shift,
+      error,
+    ],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

@@ -17,13 +17,13 @@ export function AboutView() {
       <Card className="space-y-3 text-sm leading-relaxed text-fg/90">
         <p>
           {en
-            ? "Nihongo No Michinori turns a 90-day JLPT study spreadsheet into a site you can actually work through. Each day has its lesson, drills, reading, listening, or mock test built in — no jumping between a dozen other websites."
-            : "Nihongo No Michinori mengubah spreadsheet belajar JLPT 90 hari menjadi situs yang benar-benar bisa kamu kerjakan. Setiap hari punya materi, latihan, bacaan, menyimak, atau tes tiruannya sendiri — tanpa harus berpindah-pindah ke belasan situs lain."}
+            ? "Nihongo No Michinori is a JLPT study site where every lesson — grammar, vocabulary, reading, listening or a mock test — is built in, so there's no jumping between a dozen other websites. Follow a ready-made preset such as the 90-day N5 → N4 plan, or arrange single lessons into a planner of your own."
+            : "Nihongo No Michinori adalah situs belajar JLPT dengan semua materi — tata bahasa, kosakata, bacaan, menyimak, atau tes tiruan — tersedia di dalamnya, tanpa harus berpindah-pindah ke belasan situs lain. Ikuti preset siap pakai seperti rencana 90 hari N5 → N4, atau susun materi satuan menjadi planner-mu sendiri."}
         </p>
         <p>
           {en
-            ? `Content is being built day by day. Right now days 1–${AUTHORED_SLUGS.size >= 14 ? 14 : AUTHORED_SLUGS.size} are fully authored; later days show their original reference links until their native lesson lands.`
-            : `Konten dibangun hari demi hari. Saat ini hari 1–${AUTHORED_SLUGS.size >= 14 ? 14 : AUTHORED_SLUGS.size} sudah lengkap; hari-hari berikutnya menampilkan tautan referensi aslinya sampai materinya siap.`}
+            ? `The site grows level by level. N5 and N4 lessons are available now — ${AUTHORED_SLUGS.size} of them with full built-in content and exercises, the rest with reference links until their content lands. N3, N2 and N1 come next.`
+            : `Situs ini berkembang level demi level. Materi N5 dan N4 sudah tersedia — ${AUTHORED_SLUGS.size} di antaranya lengkap dengan konten dan latihan bawaan, sisanya dengan tautan referensi sampai kontennya siap. N3, N2, dan N1 menyusul.`}
         </p>
       </Card>
 

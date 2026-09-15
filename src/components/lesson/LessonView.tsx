@@ -9,11 +9,11 @@ import { LessonSectionList } from "./LessonSectionList";
 
 export function LessonView({
   lesson,
-  dayNumber,
+  lessonId,
   showExercises = true,
 }: {
   lesson: Lesson;
-  dayNumber: number;
+  lessonId: string;
   showExercises?: boolean;
 }) {
   const { t } = useSettings();
@@ -36,7 +36,7 @@ export function LessonView({
         <div className="space-y-4 border-t border-border pt-6">
           <h2 className="text-lg font-bold">{t(STR.exercises)}</h2>
           {lesson.exercises.map((group) => (
-            <ExerciseSet key={group.id} dayNumber={dayNumber} group={group} />
+            <ExerciseSet key={group.id} lessonId={lessonId} group={group} />
           ))}
         </div>
       )}

@@ -1,12 +1,15 @@
 import type { Bi } from "./i18n";
 
 // ---------------------------------------------------------------------------
-// Planner
+// Lessons
 // ---------------------------------------------------------------------------
 
-export type Phase = "n5-refresher" | "n4-core" | "exam-sprint";
+export type JlptLevel = "N5" | "N4" | "N3" | "N2" | "N1";
 
-export type DayType =
+/** Easiest first. */
+export const JLPT_LEVELS: JlptLevel[] = ["N5", "N4", "N3", "N2", "N1"];
+
+export type LessonType =
   | "diagnostic"
   | "grammar"
   | "vocab-kanji"
@@ -36,21 +39,23 @@ export interface ExternalLink {
 
 export type Status = "not-yet" | "partial" | "done";
 
-export interface PlannerDay {
-  day: number; // 1..90
-  date: string; // ISO YYYY-MM-DD
-  month: string; // "September" | "Oktober" | "November"
-  phase: Phase;
+/** A lesson in the catalog (src/data/lessons.ts). */
+export interface LessonMeta {
+  /** Permanent — learners' progress and planners are stored against it. */
+  id: string;
+  level: JlptLevel;
+  type: LessonType;
   title: Bi;
   titleJa?: string;
   task: Bi;
   durationNote?: Bi;
-  type: DayType;
-  /** Points at a lesson module in the content registry, when authored. */
-  lessonSlug?: string;
+  /** Points at built-in content in src/content/registry.ts, when authored. */
+  contentSlug?: string;
   links: ExternalLink[];
   /** YouTube video IDs to embed (extracted from links). */
   youtube?: string[];
+  /** Day in the original 90-day plan — old /day/N links redirect here. */
+  legacyDay?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,16 +71,18 @@ export interface ExerciseResult {
   scored?: boolean;
 }
 
-export interface DayProgress {
+/** A learner's progress on one lesson — shared by their planner and by taking it on its own. */
+export interface LessonProgress {
   status: Status;
   reviewed: boolean;
   notes: string;
   exercises: ExerciseResult[];
 }
 
-export type ProgressMap = Record<number, DayProgress>;
+/** Keyed by lesson id. */
+export type ProgressMap = Record<string, LessonProgress>;
 
-export function emptyDayProgress(): DayProgress {
+export function emptyLessonProgress(): LessonProgress {
   return { status: "not-yet", reviewed: false, notes: "", exercises: [] };
 }
 
@@ -202,7 +209,7 @@ export interface WritingPrompt {
 }
 
 // ---------------------------------------------------------------------------
-// Content modules — what a planner day's `lessonSlug` can resolve to
+// Content modules — what a lesson's `contentSlug` can resolve to
 // ---------------------------------------------------------------------------
 
 export interface TestModule {

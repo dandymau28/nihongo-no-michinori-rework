@@ -127,10 +127,10 @@ function Deck({
 
 export function DeckRunner({
   module,
-  dayNumber,
+  lessonId,
 }: {
   module: DeckModule;
-  dayNumber: number;
+  lessonId: string;
 }) {
   const { t } = useSettings();
   const { recordExercise } = useProgress();
@@ -163,7 +163,7 @@ export function DeckRunner({
             key={deck.id}
             cards={deck.cards}
             onDone={(known, total) =>
-              recordExercise(dayNumber, {
+              recordExercise(lessonId, {
                 setId: `${module.slug}:${deck.id}`,
                 correct: known,
                 total,
@@ -178,7 +178,7 @@ export function DeckRunner({
         <div className="space-y-4 border-t border-border pt-6">
           <h2 className="text-lg font-bold">{t(STR.exercises)}</h2>
           {module.quiz.map((g) => (
-            <ExerciseSet key={g.id} dayNumber={dayNumber} group={g} />
+            <ExerciseSet key={g.id} lessonId={lessonId} group={g} />
           ))}
         </div>
       )}

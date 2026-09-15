@@ -1,11 +1,15 @@
-import type {
-  ExternalLink,
-  LinkKind,
-  PlannerDay,
-  Phase,
-  DayType,
-} from "@/lib/types";
 import type { Bi } from "@/lib/i18n";
+import type { ExternalLink, JlptLevel, LessonMeta, LinkKind } from "@/lib/types";
+
+/**
+ * The lesson catalog. Every lesson stands on its own: learners can open it from the lesson
+ * library, add it to a custom planner, or get it through a preset (src/data/presets.ts).
+ *
+ * `id` is permanent — learners' progress and planners are stored against it. Never change
+ * or reuse an id; add a new lesson instead.
+ * `legacyDay` is the lesson's day in the original 90-day plan; old /day/N links redirect to it.
+ * `contentSlug` points at the built-in lesson content in src/content/registry.ts, when authored.
+ */
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -30,99 +34,67 @@ function L(
 
 const YT = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 
-function phaseFor(day: number): Phase {
-  if (day <= 12) return "n5-refresher";
-  if (day <= 60) return "n4-core";
-  return "exam-sprint";
-}
+type RawLesson = Omit<LessonMeta, "level" | "links"> & { links?: ExternalLink[] };
 
-type RawDay = {
-  date: number;
-  title: Bi;
-  titleJa?: string;
-  task: Bi;
-  type: DayType;
-  duration?: Bi;
-  lessonSlug?: string;
-  links?: ExternalLink[];
-  youtube?: string[];
-};
-
-function build(
-  month: string,
-  monthNum: number,
-  rows: RawDay[],
-  startDay: number,
-): PlannerDay[] {
-  return rows.map((r, i) => {
-    const day = startDay + i;
-    return {
-      day,
-      date: `2026-${String(monthNum).padStart(2, "0")}-${String(r.date).padStart(2, "0")}`,
-      month,
-      phase: phaseFor(day),
-      title: r.title,
-      titleJa: r.titleJa,
-      task: r.task,
-      durationNote: r.duration,
-      type: r.type,
-      lessonSlug: r.lessonSlug,
-      links: r.links ?? [],
-      youtube: r.youtube,
-    } satisfies PlannerDay;
-  });
+function atLevel(level: JlptLevel, rows: RawLesson[]): LessonMeta[] {
+  return rows.map((r) => ({ ...r, level, links: r.links ?? [] }));
 }
 
 // ---------------------------------------------------------------------------
-// September — days 1..29  (N5 refresher, then N4 grammar core begins day 13)
+// N5 — refresher
 // ---------------------------------------------------------------------------
 
-const SEPTEMBER: RawDay[] = [
+export const N5_REFRESHER_LESSONS = atLevel("N5", [
   {
-    date: 2,
+    id: "n5-diagnostic",
+    legacyDay: 1,
     title: { en: "N5 Diagnostic", id: "Diagnostik N5" },
     task: { en: "N5 diagnostic test", id: "Tes diagnostik N5" },
     type: "diagnostic",
-    duration: { en: "~25 min", id: "~25 mnt" },
-    lessonSlug: "n5-diagnostic",
+    durationNote: { en: "~25 min", id: "~25 mnt" },
+    contentSlug: "n5-diagnostic",
     links: [L("https://www.jlpt.jp/e/samples/n5/index.html", "sample", "Official JLPT N5 sample")],
   },
   {
-    date: 3,
+    id: "n5-particles",
+    legacyDay: 2,
     title: { en: "Particles", id: "Partikel" },
     task: { en: "30 drills + 15 sentence builds", id: "30 latihan + 15 susun kalimat" },
     type: "grammar",
-    duration: { en: "~30 min", id: "~30 mnt" },
-    lessonSlug: "particles",
+    durationNote: { en: "~30 min", id: "~30 mnt" },
+    contentSlug: "particles",
     links: [L("https://www.mlcjapanese.co.jp/img/file60.pdf", "pdf", "MLC particle worksheet")],
   },
   {
-    date: 4,
+    id: "n5-verb-forms",
+    legacyDay: 3,
     title: { en: "Verb Forms", id: "Bentuk Kata Kerja" },
     task: { en: "30 conjugations + 20 questions", id: "30 konjugasi + 20 soal" },
     type: "grammar",
-    duration: { en: "~25 min", id: "~25 mnt" },
-    lessonSlug: "verb-forms",
+    durationNote: { en: "~25 min", id: "~25 mnt" },
+    contentSlug: "verb-forms",
     links: [L("https://baileysnyder.com/jconj/", "exercise", "Bailey Snyder conjugation drill")],
   },
   {
-    date: 5,
+    id: "n5-adjectives",
+    legacyDay: 4,
     title: { en: "Adjectives", id: "Kata Sifat" },
     task: { en: "30 drills + speaking", id: "30 latihan + berbicara" },
     type: "grammar",
-    duration: { en: "~25 min", id: "~25 mnt" },
-    lessonSlug: "adjectives",
+    durationNote: { en: "~25 min", id: "~25 mnt" },
+    contentSlug: "adjectives",
   },
   {
-    date: 6,
+    id: "n5-vocab-kanji",
+    legacyDay: 5,
     title: { en: "Vocab / Kanji", id: "Kosakata / Kanji" },
     task: { en: "50 vocab + 20 kanji", id: "50 kosakata + 20 kanji" },
     type: "vocab-kanji",
-    duration: {
+    durationNote: {
       en: "Vocab 120 min · Kanji 95 min · ≥5 practice sets each",
       id: "Kosakata 120 mnt · Kanji 95 mnt · min. 5 set latihan tiap bagian",
     },
-    lessonSlug: "n5-vocab-kanji",
+    contentSlug: "n5-vocab-kanji",
     links: [
       L(
         "https://www.minnanihongo.com/quizzes?level=N5&categories=kanji,vocabulary&page=1",
@@ -132,22 +104,24 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 7,
+    id: "n5-te-form",
+    legacyDay: 6,
     title: { en: "〜て Form", id: "Bentuk 〜て" },
     titleJa: "〜て形",
     task: { en: "40 conjugations + grammar uses", id: "40 konjugasi + penggunaan tata bahasa" },
     type: "grammar",
-    duration: { en: "~30 min", id: "~30 mnt" },
-    lessonSlug: "te-form",
+    durationNote: { en: "~30 min", id: "~30 mnt" },
+    contentSlug: "te-form",
     links: [L("https://baileysnyder.com/jconj/", "exercise", "Bailey Snyder conjugation drill")],
   },
   {
-    date: 8,
+    id: "n5-location",
+    legacyDay: 7,
     title: { en: "Location", id: "Lokasi" },
     task: { en: "Grammar + speaking", id: "Tata bahasa + berbicara" },
     type: "grammar",
-    duration: { en: "~25 min", id: "~25 mnt" },
-    lessonSlug: "location",
+    durationNote: { en: "~25 min", id: "~25 mnt" },
+    contentSlug: "location",
     links: [
       L(
         "https://ltl-japanese.com/grammar-bank/location-particles/",
@@ -157,54 +131,67 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 9,
+    id: "n5-time-routine",
+    legacyDay: 8,
     title: { en: "Time & Routine", id: "Waktu & Rutinitas" },
     task: { en: "Grammar + short writing", id: "Tata bahasa + menulis singkat" },
     type: "skill",
-    duration: { en: "~25 min", id: "~25 mnt" },
-    lessonSlug: "time-routine",
+    durationNote: { en: "~25 min", id: "~25 mnt" },
+    contentSlug: "time-routine",
   },
   {
-    date: 10,
+    id: "n5-reading-1",
+    legacyDay: 9,
     title: { en: "Reading", id: "Membaca" },
     task: { en: "5 short passages", id: "5 bacaan singkat" },
     type: "reading",
-    duration: { en: "~30 min", id: "~30 mnt" },
-    lessonSlug: "n5-reading-1",
+    durationNote: { en: "~30 min", id: "~30 mnt" },
+    contentSlug: "n5-reading-1",
     links: [
       L("https://www.thejapanesepage.com/jlpt-n5-reading/", "reading", "The Japanese Page — N5 reading"),
     ],
   },
   {
-    date: 11,
+    id: "n5-listening-1",
+    legacyDay: 10,
     title: { en: "Listening", id: "Menyimak" },
     task: { en: "30–40 minutes of listening", id: "30–40 menit menyimak" },
     type: "listening",
-    duration: { en: "~35 min", id: "~35 mnt" },
-    lessonSlug: "n5-listening-1",
+    durationNote: { en: "~35 min", id: "~35 mnt" },
+    contentSlug: "n5-listening-1",
     links: [
       L("https://jlptpro.com/course/jlpt-n5/listening-tests", "listening", "JLPT Pro — N5 listening tests"),
     ],
   },
   {
-    date: 12,
+    id: "n5-integration-test",
+    legacyDay: 11,
     title: { en: "Integration", id: "Integrasi" },
     task: { en: "Mini test across the week", id: "Tes mini gabungan sepekan" },
     type: "test",
-    duration: { en: "~20 min", id: "~20 mnt" },
-    lessonSlug: "n5-integration",
+    durationNote: { en: "~20 min", id: "~20 mnt" },
+    contentSlug: "n5-integration",
     links: [L("https://bunpro.jp/id/jlpt_practice_tests", "exercise", "Bunpro — JLPT practice tests")],
   },
   {
-    date: 13,
+    id: "n5-exit-test",
+    legacyDay: 12,
     title: { en: "N5 Exit Test", id: "Tes Akhir N5" },
     task: { en: "Full N5 mock test", id: "Tes tiruan N5 lengkap" },
     type: "test",
-    duration: { en: "~45 min", id: "~45 mnt" },
-    lessonSlug: "n5-exit",
+    durationNote: { en: "~45 min", id: "~45 mnt" },
+    contentSlug: "n5-exit",
   },
+]);
+
+// ---------------------------------------------------------------------------
+// N4 — grammar core
+// ---------------------------------------------------------------------------
+
+export const N4_CORE_LESSONS = atLevel("N4", [
   {
-    date: 14,
+    id: "n4-plain-form-1",
+    legacyDay: 13,
     title: { en: "Plain Form (1)", id: "Bentuk Biasa (1)" },
     titleJa: "普通形（１）",
     task: {
@@ -212,12 +199,13 @@ const SEPTEMBER: RawDay[] = [
       id: "Bentuk biasa (V / kata sifat / nomina) + 30 latihan transformasi",
     },
     type: "grammar",
-    duration: { en: "~35 min", id: "~35 mnt" },
-    lessonSlug: "plain-form-1",
+    durationNote: { en: "~35 min", id: "~35 mnt" },
+    contentSlug: "plain-form-1",
     links: [L("https://www.mlcjapanese.co.jp/n5_06_01.html", "explainer", "MLC — plain form")],
   },
   {
-    date: 15,
+    id: "n4-plain-form-2",
+    legacyDay: 14,
     title: { en: "Plain Form (2)", id: "Bentuk Biasa (2)" },
     titleJa: "普通形（２）",
     task: {
@@ -225,11 +213,12 @@ const SEPTEMBER: RawDay[] = [
       id: "ます → kamus / ない / た / なかった + 30 soal",
     },
     type: "grammar",
-    duration: { en: "~30 min", id: "~30 mnt" },
-    lessonSlug: "plain-form-2",
+    durationNote: { en: "~30 min", id: "~30 mnt" },
+    contentSlug: "plain-form-2",
   },
   {
-    date: 16,
+    id: "n4-to-omoimasu",
+    legacyDay: 15,
     title: { en: "Plain form + と思います", id: "Bentuk biasa + と思います" },
     titleJa: "普通形＋と思います",
     task: { en: "〜と思います / 〜と思いません + speaking", id: "〜と思います / 〜と思いません + berbicara" },
@@ -237,7 +226,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.mlcjapanese.co.jp/n4_04_12.html", "explainer", "MLC — と思います")],
   },
   {
-    date: 17,
+    id: "n4-sou-desu-appearance",
+    legacyDay: 16,
     title: { en: "そうです (looks like) — 1", id: "そうです (kelihatannya) — 1" },
     titleJa: "そうです（１）",
     task: { en: "〜そうです for appearance + 11 questions", id: "〜そうです untuk penampilan + 11 soal" },
@@ -252,7 +242,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 18,
+    id: "n4-sou-desu-hearsay",
+    legacyDay: 17,
     title: { en: "そうです (hearsay) — 2", id: "そうです (katanya) — 2" },
     titleJa: "そうです（２）",
     task: { en: "V/Adj そうです + prediction speaking", id: "V/Adj そうです + berbicara prediksi" },
@@ -266,7 +257,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 19,
+    id: "n4-noun-modification-1",
+    legacyDay: 18,
     title: { en: "Noun Modification (1)", id: "Modifikasi Nomina (1)" },
     titleJa: "名詞修飾",
     task: { en: "名詞修飾 + 20 sentence-building drills", id: "名詞修飾 + 20 latihan susun kalimat" },
@@ -274,7 +266,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.mlcjapanese.co.jp/n5_04_06.html", "explainer", "MLC — noun modification")],
   },
   {
-    date: 20,
+    id: "n4-weekly-review-1",
+    legacyDay: 19,
     title: { en: "Weekly Review (1)", id: "Ulasan Mingguan (1)" },
     task: {
       en: "Review 普通形 · と思う · そう + mini test",
@@ -289,7 +282,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 21,
+    id: "n4-noun-modification-2",
+    legacyDay: 20,
     title: { en: "Noun Modification (2)", id: "Modifikasi Nomina (2)" },
     task: { en: "Complex noun phrases + 3 reading passages", id: "Frasa nomina kompleks + 3 bacaan" },
     type: "reading",
@@ -303,7 +297,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 22,
+    id: "n4-n-desu",
+    legacyDay: 21,
     title: { en: "〜んです", id: "〜んです" },
     titleJa: "〜んです",
     task: { en: "〜んです / 〜んですか / 〜んですが + role play", id: "〜んです / 〜んですか / 〜んですが + bermain peran" },
@@ -311,7 +306,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.mlcjapanese.co.jp/n4_01_04.html", "explainer", "MLC — んです")],
   },
   {
-    date: 23,
+    id: "n4-ta-koto-ga-aru",
+    legacyDay: 22,
     title: { en: "〜たことがあります", id: "〜たことがあります" },
     titleJa: "〜たことがあります",
     task: { en: "Experience + interview speaking", id: "Pengalaman + wawancara berbicara" },
@@ -319,7 +315,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/takotogaaru/", "explainer", "Tofugu — たことがある")],
   },
   {
-    date: 24,
+    id: "n4-tari-tari",
+    legacyDay: 23,
     title: { en: "〜たり〜たり", id: "〜たり〜たり" },
     titleJa: "〜たり〜たり",
     task: { en: "Listing activities + writing / speaking", id: "Mendaftar kegiatan + menulis / berbicara" },
@@ -334,7 +331,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 25,
+    id: "n4-nagara",
+    legacyDay: 24,
     title: { en: "〜ながら", id: "〜ながら" },
     titleJa: "〜ながら",
     task: { en: "Simultaneous actions + 20 drills + speaking", id: "Aksi bersamaan + 20 latihan + berbicara" },
@@ -345,7 +343,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 26,
+    id: "n4-potential-form",
+    legacyDay: 25,
     title: { en: "Potential Form", id: "Bentuk Potensial" },
     titleJa: "可能形",
     task: { en: "V-potential + ability / possibility practice", id: "V-potensial + latihan kemampuan / kemungkinan" },
@@ -353,7 +352,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.mlcjapanese.co.jp/n4_01_07.html", "explainer", "MLC — potential form")],
   },
   {
-    date: 27,
+    id: "n4-weekly-review-2",
+    legacyDay: 26,
     title: { en: "Weekly Review (2)", id: "Ulasan Mingguan (2)" },
     task: {
       en: "Grammar + reading + listening + integrated test",
@@ -369,7 +369,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 28,
+    id: "n4-shi-reasons",
+    legacyDay: 27,
     title: { en: "〜し (reasons)", id: "〜し (alasan)" },
     titleJa: "〜し",
     task: { en: "〜し〜し / stacking multiple reasons", id: "〜し〜し / menumpuk beberapa alasan" },
@@ -377,7 +378,8 @@ const SEPTEMBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/shi/", "explainer", "Tofugu — し")],
   },
   {
-    date: 29,
+    id: "n4-foundation-review",
+    legacyDay: 28,
     title: { en: "N4 Foundation Review", id: "Ulasan Fondasi N4" },
     task: {
       en: "All grammar so far + 50 questions + error analysis",
@@ -393,7 +395,8 @@ const SEPTEMBER: RawDay[] = [
     ],
   },
   {
-    date: 30,
+    id: "n4-foundation-test",
+    legacyDay: 29,
     title: { en: "N4 Foundation Test", id: "Tes Fondasi N4" },
     task: {
       en: "Grammar + vocab + reading + listening + speaking",
@@ -402,21 +405,16 @@ const SEPTEMBER: RawDay[] = [
     type: "test",
     links: [L("https://bunpro.jp/id/jlpt_practice_tests", "exercise", "Bunpro — JLPT practice tests (N4-1)")],
   },
-];
-
-// ---------------------------------------------------------------------------
-// October — days 30..60  (N4 grammar core)
-// ---------------------------------------------------------------------------
-
-const OCTOBER: RawDay[] = [
   {
-    date: 1,
+    id: "n4-core-diagnostic",
+    legacyDay: 30,
     title: { en: "N4 Core Diagnostic", id: "Diagnostik Inti N4" },
     task: { en: "Review foundation + 40 grammar questions", id: "Ulas fondasi + 40 soal tata bahasa" },
     type: "diagnostic",
   },
   {
-    date: 2,
+    id: "n4-tara",
+    legacyDay: 31,
     title: { en: "〜たら (conditional)", id: "〜たら (pengandaian)" },
     titleJa: "〜たら",
     task: { en: "Conditional 〜たら + 30 drills + sentence building", id: "Pengandaian 〜たら + 30 latihan + susun kalimat" },
@@ -424,7 +422,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/conditional-form-tara/", "explainer", "Tofugu — たら")],
   },
   {
-    date: 3,
+    id: "n4-ba",
+    legacyDay: 32,
     title: { en: "〜ば (conditional)", id: "〜ば (pengandaian)" },
     titleJa: "〜ば",
     task: { en: "〜ば conditional + contrast with 〜たら", id: "Pengandaian 〜ば + kontras dengan 〜たら" },
@@ -432,13 +431,15 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/verb-conditional-form-ba/", "explainer", "Tofugu — ば")],
   },
   {
-    date: 4,
+    id: "n4-weekly-review-3",
+    legacyDay: 33,
     title: { en: "Weekly Review", id: "Ulasan Mingguan" },
     task: { en: "〜たら · 〜ば + reading / listening", id: "〜たら · 〜ば + membaca / menyimak" },
     type: "review",
   },
   {
-    date: 5,
+    id: "n4-nara",
+    legacyDay: 34,
     title: { en: "〜なら", id: "〜なら" },
     titleJa: "〜なら",
     task: { en: "〜なら + context practice", id: "〜なら + latihan konteks" },
@@ -446,7 +447,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/conditional-form-nara/", "explainer", "Tofugu — なら")],
   },
   {
-    date: 6,
+    id: "n4-to-natural-result",
+    legacyDay: 35,
     title: { en: "〜と (natural result)", id: "〜と (akibat alami)" },
     titleJa: "〜と",
     task: { en: "〜と + automatic / natural consequence", id: "〜と + akibat otomatis / alami" },
@@ -454,7 +456,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/verb-to/", "explainer", "Tofugu — と")],
   },
   {
-    date: 7,
+    id: "n4-conditionals-review",
+    legacyDay: 36,
     title: { en: "Conditionals Review", id: "Ulasan Pengandaian" },
     task: { en: "と · たら · ば · なら comparison + 40 questions", id: "Perbandingan と · たら · ば · なら + 40 soal" },
     type: "review",
@@ -464,7 +467,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 8,
+    id: "n4-temo-temoii",
+    legacyDay: 37,
     title: { en: "〜ても / 〜てもいい", id: "〜ても / 〜てもいい" },
     titleJa: "〜ても",
     task: { en: "〜ても / 〜てもいい？ + concession", id: "〜ても / 〜てもいい？ + konsesi" },
@@ -475,7 +479,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 9,
+    id: "n4-noni",
+    legacyDay: 38,
     title: { en: "〜のに (contrast)", id: "〜のに (kontras)" },
     titleJa: "〜のに",
     task: { en: "Contrast 〜のに + 20 drills + speaking", id: "Kontras 〜のに + 20 latihan + berbicara" },
@@ -483,7 +488,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/conjunctive-particle-noni/", "explainer", "Tofugu — のに")],
   },
   {
-    date: 10,
+    id: "n4-node-kara",
+    legacyDay: 39,
     title: { en: "〜ので / から", id: "〜ので / から" },
     titleJa: "〜ので・から",
     task: { en: "Reason expressions + comparison", id: "Ungkapan alasan + perbandingan" },
@@ -497,13 +503,15 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 11,
+    id: "n4-weekly-review-4",
+    legacyDay: 40,
     title: { en: "Weekly Review", id: "Ulasan Mingguan" },
     task: { en: "Condition + reason + mini test", id: "Syarat + alasan + tes mini" },
     type: "review",
   },
   {
-    date: 12,
+    id: "n4-tsumori",
+    legacyDay: 41,
     title: { en: "〜つもり (intention)", id: "〜つもり (niat)" },
     titleJa: "〜つもり",
     task: { en: "〜つもりです / 〜つもりはない", id: "〜つもりです / 〜つもりはない" },
@@ -511,7 +519,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/tsumori/", "explainer", "Tofugu — つもり")],
   },
   {
-    date: 13,
+    id: "n4-yotei",
+    legacyDay: 42,
     title: { en: "〜予定 (plans)", id: "〜予定 (rencana)" },
     titleJa: "〜予定",
     task: { en: "〜予定です + scheduled plans", id: "〜予定です + rencana terjadwal" },
@@ -519,7 +528,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://kepojepang.com/jlpt/yotei-da/", "explainer", "Kepo Jepang — 予定")],
   },
   {
-    date: 14,
+    id: "n4-koto-ni-suru-naru",
+    legacyDay: 43,
     title: { en: "〜ことにする / なる", id: "〜ことにする / なる" },
     titleJa: "〜ことにする・なる",
     task: { en: "Personal decision vs. arranged outcome", id: "Keputusan pribadi vs. hasil yang diatur" },
@@ -530,7 +540,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 15,
+    id: "n4-you-ni-naru",
+    legacyDay: 44,
     title: { en: "〜ようになる", id: "〜ようになる" },
     titleJa: "〜ようになる",
     task: { en: "Change in ability / habit", id: "Perubahan kemampuan / kebiasaan" },
@@ -540,7 +551,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 16,
+    id: "n4-you-ni-suru",
+    legacyDay: 45,
     title: { en: "〜ようにする", id: "〜ようにする" },
     titleJa: "〜ようにする",
     task: { en: "Making an effort / building a habit", id: "Berusaha / membangun kebiasaan" },
@@ -550,13 +562,15 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 17,
+    id: "n4-weekly-review-5",
+    legacyDay: 46,
     title: { en: "Weekly Review", id: "Ulasan Mingguan" },
     task: { en: "Intention + decision + change", id: "Niat + keputusan + perubahan" },
     type: "review",
   },
   {
-    date: 18,
+    id: "n4-tame-ni",
+    legacyDay: 47,
     title: { en: "〜ために (purpose)", id: "〜ために (tujuan)" },
     titleJa: "〜ために",
     task: { en: "Purpose / reason 〜ために", id: "Tujuan / alasan 〜ために" },
@@ -564,7 +578,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://kepojepang.com/jlpt/tame-ni/", "explainer", "Kepo Jepang — ために")],
   },
   {
-    date: 19,
+    id: "n4-you-ni-purpose",
+    legacyDay: 48,
     title: { en: "〜ように (purpose)", id: "〜ように (tujuan)" },
     titleJa: "〜ように",
     task: { en: "Purpose with ability / state verbs", id: "Tujuan dengan kata kerja kemampuan / keadaan" },
@@ -572,7 +587,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://bunpro.jp/grammar_points/%E3%82%88%E3%81%86%E3%81%AB", "explainer", "Bunpro — ように")],
   },
   {
-    date: 20,
+    id: "n4-sugiru",
+    legacyDay: 49,
     title: { en: "〜すぎる (too much)", id: "〜すぎる (terlalu)" },
     titleJa: "〜すぎる",
     task: { en: "Excessive degree + conjugation", id: "Tingkat berlebihan + konjugasi" },
@@ -580,7 +596,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://www.tofugu.com/japanese-grammar/sugiru/", "explainer", "Tofugu — すぎる")],
   },
   {
-    date: 21,
+    id: "n4-yasui-nikui",
+    legacyDay: 50,
     title: { en: "〜やすい / 〜にくい", id: "〜やすい / 〜にくい" },
     titleJa: "〜やすい・にくい",
     task: { en: "Ease / difficulty of an action", id: "Mudah / sulit melakukan suatu tindakan" },
@@ -590,7 +607,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 22,
+    id: "n4-compound-verbs",
+    legacyDay: 51,
     title: { en: "Compound Verbs", id: "Kata Kerja Majemuk" },
     titleJa: "〜始める・続ける・終わる・出す",
     task: { en: "〜始める / 〜続ける / 〜終わる / 〜出す", id: "〜始める / 〜続ける / 〜終わる / 〜出す" },
@@ -604,13 +622,15 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 23,
+    id: "n4-weekly-review-6",
+    legacyDay: 52,
     title: { en: "Weekly Review", id: "Ulasan Mingguan" },
     task: { en: "Purpose + degree + conjugation", id: "Tujuan + tingkat + konjugasi" },
     type: "review",
   },
   {
-    date: 24,
+    id: "n4-temiru-teoku",
+    legacyDay: 53,
     title: { en: "〜てみる / 〜ておく", id: "〜てみる / 〜ておく" },
     titleJa: "〜てみる・ておく",
     task: { en: "Trying something + preparation", id: "Mencoba sesuatu + persiapan" },
@@ -621,7 +641,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 25,
+    id: "n4-teshimau",
+    legacyDay: 54,
     title: { en: "〜てしまう", id: "〜てしまう" },
     titleJa: "〜てしまう",
     task: { en: "Completion / regret", id: "Penyelesaian / penyesalan" },
@@ -635,7 +656,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 26,
+    id: "n4-shika-nai-bakari",
+    legacyDay: 55,
     title: { en: "〜しか〜ない / 〜ばかり", id: "〜しか〜ない / 〜ばかり" },
     titleJa: "〜しか〜ない・ばかり",
     task: { en: "Limitation + tendency", id: "Batasan + kecenderungan" },
@@ -646,7 +668,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 27,
+    id: "n4-hazu-kamoshirenai",
+    legacyDay: 56,
     title: { en: "〜はず / 〜かもしれません", id: "〜はず / 〜かもしれません" },
     titleJa: "〜はず・かもしれない",
     task: { en: "Expectation + possibility", id: "Perkiraan + kemungkinan" },
@@ -658,7 +681,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 28,
+    id: "n4-sou-you-mitai-rashii",
+    legacyDay: 57,
     title: { en: "そう / よう / みたい / らしい", id: "そう / よう / みたい / らしい" },
     titleJa: "そう・よう・みたい・らしい",
     task: { en: "Appearance / inference / hearsay contrast", id: "Kontras penampilan / kesimpulan / katanya" },
@@ -672,7 +696,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 29,
+    id: "n4-integrated-grammar",
+    legacyDay: 58,
     title: { en: "Integrated Grammar", id: "Tata Bahasa Terpadu" },
     task: { en: "100-question N4 grammar review", id: "Ulasan tata bahasa N4 100 soal" },
     type: "review",
@@ -685,7 +710,8 @@ const OCTOBER: RawDay[] = [
     ],
   },
   {
-    date: 30,
+    id: "n4-core-mock",
+    legacyDay: 59,
     title: { en: "N4 Core Mock", id: "Tes Tiruan Inti N4" },
     task: {
       en: "Grammar + vocab + kanji + reading + listening",
@@ -695,7 +721,8 @@ const OCTOBER: RawDay[] = [
     links: [L("https://nihonez.com/jlpt-n4-test/", "exercise", "Nihonez — JLPT N4 test")],
   },
   {
-    date: 31,
+    id: "n4-core-error-analysis",
+    legacyDay: 60,
     title: { en: "Error Analysis", id: "Analisis Kesalahan" },
     task: {
       en: "Correct the mock + weak-point review + speaking / writing",
@@ -703,22 +730,24 @@ const OCTOBER: RawDay[] = [
     },
     type: "review",
   },
-];
+]);
 
 // ---------------------------------------------------------------------------
-// November — days 61..90  (exam sprint: reading, listening, mocks)
+// N4 — exam sprint: reading, listening, remedials, mock tests
 // ---------------------------------------------------------------------------
 
-const NOVEMBER: RawDay[] = [
+export const N4_EXAM_SPRINT_LESSONS = atLevel("N4", [
   {
-    date: 1,
+    id: "n4-exam-diagnostic",
+    legacyDay: 61,
     title: { en: "N4 Diagnostic", id: "Diagnostik N4" },
     task: { en: "Mini mock: grammar + reading + listening", id: "Tes tiruan mini: tata bahasa + membaca + menyimak" },
     type: "diagnostic",
     links: [L("https://www.jlpt.jp/e/samples/n4/index.html", "sample", "Official JLPT N4 sample")],
   },
   {
-    date: 2,
+    id: "n4-reading-information",
+    legacyDay: 62,
     title: { en: "Reading: Information", id: "Membaca: Informasi" },
     task: { en: "Notice / poster / schedule + 5 passages", id: "Pengumuman / poster / jadwal + 5 bacaan" },
     type: "reading",
@@ -729,37 +758,43 @@ const NOVEMBER: RawDay[] = [
     ],
   },
   {
-    date: 3,
+    id: "n4-reading-email",
+    legacyDay: 63,
     title: { en: "Reading: Email", id: "Membaca: Email" },
     task: { en: "Email / message + identify purpose & key info", id: "Email / pesan + kenali tujuan & info kunci" },
     type: "reading",
   },
   {
-    date: 4,
+    id: "n4-reading-short-essay",
+    legacyDay: 64,
     title: { en: "Reading: Short Essay", id: "Membaca: Esai Pendek" },
     task: { en: "3 short passages + main idea", id: "3 bacaan pendek + gagasan utama" },
     type: "reading",
   },
   {
-    date: 5,
+    id: "n4-reading-detail",
+    legacyDay: 65,
     title: { en: "Reading: Detail", id: "Membaca: Detail" },
     task: { en: "5 passages + timed practice", id: "5 bacaan + latihan berwaktu" },
     type: "reading",
   },
   {
-    date: 6,
+    id: "n4-reading-strategy",
+    legacyDay: 66,
     title: { en: "Reading Strategy", id: "Strategi Membaca" },
     task: { en: "Skimming, scanning, keywords + inference", id: "Skimming, scanning, kata kunci + inferensi" },
     type: "skill",
   },
   {
-    date: 7,
+    id: "n4-reading-mock",
+    legacyDay: 67,
     title: { en: "Reading Mock", id: "Tes Tiruan Membaca" },
     task: { en: "Timed N4 reading + error analysis", id: "Membaca N4 berwaktu + analisis kesalahan" },
     type: "test",
   },
   {
-    date: 8,
+    id: "n4-listening-key-info",
+    legacyDay: 68,
     title: { en: "Listening: Key Info", id: "Menyimak: Info Kunci" },
     task: { en: "Who / what / when / where + 20 min listening", id: "Siapa / apa / kapan / di mana + 20 mnt menyimak" },
     type: "listening",
@@ -774,37 +809,43 @@ const NOVEMBER: RawDay[] = [
     youtube: ["AMwQv0joB9I", "jiFLMgBhijQ", "2rpQJjVVYU8", "xyQL4mqppgQ", "uDrxrrsWXfw"],
   },
   {
-    date: 9,
+    id: "n4-listening-response",
+    legacyDay: 69,
     title: { en: "Listening: Response", id: "Menyimak: Respons" },
     task: { en: "Appropriate-response questions", id: "Soal respons yang tepat" },
     type: "listening",
   },
   {
-    date: 10,
+    id: "n4-listening-situation",
+    legacyDay: 70,
     title: { en: "Listening: Situation", id: "Menyimak: Situasi" },
     task: { en: "Situation → problem → solution", id: "Situasi → masalah → solusi" },
     type: "listening",
   },
   {
-    date: 11,
+    id: "n4-listening-details",
+    legacyDay: 71,
     title: { en: "Listening: Details", id: "Menyimak: Detail" },
     task: { en: "Numbers, time, place, changes", id: "Angka, waktu, tempat, perubahan" },
     type: "listening",
   },
   {
-    date: 12,
+    id: "n4-listening-intention",
+    legacyDay: 72,
     title: { en: "Listening: Intention", id: "Menyimak: Maksud" },
     task: { en: "Speaker intention / purpose", id: "Maksud / tujuan pembicara" },
     type: "listening",
   },
   {
-    date: 13,
+    id: "n4-shadowing",
+    legacyDay: 73,
     title: { en: "Shadowing", id: "Shadowing" },
     task: { en: "Listening + shadowing + dictation", id: "Menyimak + shadowing + dikte" },
     type: "skill",
   },
   {
-    date: 14,
+    id: "n4-listening-mock",
+    legacyDay: 74,
     title: { en: "Listening Mock", id: "Tes Tiruan Menyimak" },
     task: { en: "Timed N4 listening + error analysis", id: "Menyimak N4 berwaktu + analisis kesalahan" },
     type: "test",
@@ -815,13 +856,15 @@ const NOVEMBER: RawDay[] = [
     youtube: ["uIMOsdwUbro", "HK8z8A2_Qgc"],
   },
   {
-    date: 15,
+    id: "n4-grammar-diagnostic",
+    legacyDay: 75,
     title: { en: "Grammar Diagnostic", id: "Diagnostik Tata Bahasa" },
     task: { en: "80 N4 grammar questions", id: "80 soal tata bahasa N4" },
     type: "diagnostic",
   },
   {
-    date: 16,
+    id: "n4-conditionals-remedial",
+    legacyDay: 76,
     title: { en: "Conditionals Remedial", id: "Remedial Pengandaian" },
     task: { en: "と · たら · ば · なら remedial", id: "Remedial と · たら · ば · なら" },
     type: "review",
@@ -829,7 +872,8 @@ const NOVEMBER: RawDay[] = [
     youtube: ["6EmwBNxXFf4"],
   },
   {
-    date: 17,
+    id: "n4-reason-contrast-review",
+    legacyDay: 77,
     title: { en: "Reason / Contrast", id: "Alasan / Kontras" },
     task: { en: "から · ので · のに · ても", id: "から · ので · のに · ても" },
     type: "review",
@@ -837,103 +881,121 @@ const NOVEMBER: RawDay[] = [
     youtube: ["FmEHIqng5lk"],
   },
   {
-    date: 18,
+    id: "n4-intention-decision-review",
+    legacyDay: 78,
     title: { en: "Intention / Decision", id: "Niat / Keputusan" },
     task: { en: "つもり · 予定 · ことにする / なる", id: "つもり · 予定 · ことにする / なる" },
     type: "review",
   },
   {
-    date: 19,
+    id: "n4-change-purpose-review",
+    legacyDay: 79,
     title: { en: "Change / Purpose", id: "Perubahan / Tujuan" },
     task: { en: "ようになる · ようにする · ために", id: "ようになる · ようにする · ために" },
     type: "review",
   },
   {
-    date: 20,
+    id: "n4-aspect-degree-review",
+    legacyDay: 80,
     title: { en: "Aspect / Degree", id: "Aspek / Tingkat" },
     task: { en: "てみる · ておく · てしまう · すぎる", id: "てみる · ておく · てしまう · すぎる" },
     type: "review",
   },
   {
-    date: 21,
+    id: "n4-grammar-review",
+    legacyDay: 81,
     title: { en: "Grammar Review", id: "Ulasan Tata Bahasa" },
     task: { en: "100 mixed questions + error analysis", id: "100 soal campuran + analisis kesalahan" },
     type: "review",
   },
   {
-    date: 22,
+    id: "n4-mock-test-1",
+    legacyDay: 82,
     title: { en: "Mock Test (1)", id: "Tes Tiruan (1)" },
     task: { en: "Full N4 simulation", id: "Simulasi N4 lengkap" },
     type: "test",
   },
   {
-    date: 23,
+    id: "n4-mock-analysis",
+    legacyDay: 83,
     title: { en: "Mock Analysis", id: "Analisis Tes Tiruan" },
     task: { en: "Review all mistakes + weak areas", id: "Ulas semua kesalahan + area lemah" },
     type: "review",
   },
   {
-    date: 24,
+    id: "n4-vocabulary-remedial",
+    legacyDay: 84,
     title: { en: "Vocabulary Remedial", id: "Remedial Kosakata" },
     task: { en: "High-frequency N4 vocab + contextual learning", id: "Kosakata N4 frekuensi tinggi + belajar kontekstual" },
     type: "vocab-kanji",
   },
   {
-    date: 25,
+    id: "n4-kanji-remedial",
+    legacyDay: 85,
     title: { en: "Kanji Remedial", id: "Remedial Kanji" },
     task: { en: "Kanji readings + 熟語 + contextual reading", id: "Bacaan kanji + 熟語 + membaca kontekstual" },
     type: "vocab-kanji",
   },
   {
-    date: 26,
+    id: "n4-reading-remedial",
+    legacyDay: 86,
     title: { en: "Reading Remedial", id: "Remedial Membaca" },
     task: { en: "Weak reading question types", id: "Tipe soal membaca yang lemah" },
     type: "reading",
   },
   {
-    date: 27,
+    id: "n4-listening-remedial",
+    legacyDay: 87,
     title: { en: "Listening Remedial", id: "Remedial Menyimak" },
     task: { en: "Weak listening question types", id: "Tipe soal menyimak yang lemah" },
     type: "listening",
   },
   {
-    date: 28,
+    id: "n4-mock-test-2",
+    legacyDay: 88,
     title: { en: "Mock Test (2)", id: "Tes Tiruan (2)" },
     task: { en: "Full N4 simulation", id: "Simulasi N4 lengkap" },
     type: "test",
   },
   {
-    date: 29,
+    id: "n4-final-review",
+    legacyDay: 89,
     title: { en: "Final Review", id: "Ulasan Akhir" },
     task: { en: "Error log + grammar / vocab / kanji review", id: "Catatan kesalahan + ulasan tata bahasa / kosakata / kanji" },
     type: "review",
   },
   {
-    date: 30,
+    id: "n4-final-benchmark",
+    legacyDay: 90,
     title: { en: "Final Benchmark", id: "Tolok Ukur Akhir" },
     task: { en: "Final test + speaking + study strategy", id: "Tes akhir + berbicara + strategi belajar" },
     type: "test",
   },
-];
+]);
+
+// N3, N2 and N1 lessons will be added here.
 
 // ---------------------------------------------------------------------------
 
-export const PLANNER: PlannerDay[] = [
-  ...build("September", 9, SEPTEMBER, 1),
-  ...build("Oktober", 10, OCTOBER, 30),
-  ...build("November", 11, NOVEMBER, 61),
+export const LESSONS: LessonMeta[] = [
+  ...N5_REFRESHER_LESSONS,
+  ...N4_CORE_LESSONS,
+  ...N4_EXAM_SPRINT_LESSONS,
 ];
 
-export function getDay(day: number): PlannerDay | undefined {
-  return PLANNER.find((d) => d.day === day);
+const BY_ID = new Map(LESSONS.map((l) => [l.id, l]));
+const BY_LEGACY_DAY = new Map(
+  LESSONS.filter((l) => l.legacyDay != null).map((l) => [l.legacyDay!, l]),
+);
+
+export function getLesson(id: string | null | undefined): LessonMeta | undefined {
+  return id ? BY_ID.get(id) : undefined;
 }
 
-export const PHASES: { id: Phase; from: number; to: number }[] = [
-  { id: "n5-refresher", from: 1, to: 12 },
-  { id: "n4-core", from: 13, to: 60 },
-  { id: "exam-sprint", from: 61, to: 90 },
-];
+export function lessonForLegacyDay(day: number): LessonMeta | undefined {
+  return BY_LEGACY_DAY.get(day);
+}
 
-export function phaseMeta(phase: Phase) {
-  return PHASES.find((p) => p.id === phase)!;
+export function lessonsAtLevel(level: JlptLevel): LessonMeta[] {
+  return LESSONS.filter((l) => l.level === level);
 }

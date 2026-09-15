@@ -4,12 +4,13 @@ import type { Bi } from "./i18n";
 export const STR = {
   appName: { en: "Nihongo No Michinori", id: "Nihongo No Michinori" },
   tagline: {
-    en: "Your 90-day N5 → N4 plan, with every lesson and drill built in.",
-    id: "Rencana 90 hari N5 → N4-mu, lengkap dengan semua materi dan latihannya.",
+    en: "JLPT N5 to N1 — follow a ready-made study plan, or build your own from single lessons.",
+    id: "JLPT N5 sampai N1 — ikuti rencana belajar siap pakai, atau susun sendiri dari materi satuan.",
   },
 
   nav_dashboard: { en: "Dashboard", id: "Beranda" },
   nav_planner: { en: "Planner", id: "Planner" },
+  nav_lessons: { en: "Lessons", id: "Materi" },
   nav_practice: { en: "Practice", id: "Latihan" },
   nav_settings: { en: "Settings", id: "Pengaturan" },
   nav_about: { en: "About", id: "Tentang" },
@@ -126,8 +127,7 @@ export const STR = {
 
   // Dashboard
   today: { en: "Today", id: "Hari ini" },
-  day: { en: "Day", id: "Hari" },
-  of90: { en: "of 90", id: "dari 90" },
+  lessons_done: { en: "lessons done", id: "materi selesai" },
   resume: { en: "Continue today's study", id: "Lanjutkan belajar hari ini" },
   progress: { en: "Progress", id: "Progres" },
   completed: { en: "completed", id: "selesai" },
@@ -137,12 +137,11 @@ export const STR = {
   phase: { en: "Phase", id: "Fase" },
   jump_back_in: { en: "Jump back in", id: "Lanjutkan" },
 
-  // Phases
-  phase_n5refresher: { en: "N5 Refresher", id: "Penyegaran N5" },
-  phase_n4core: { en: "N4 Grammar Core", id: "Inti Tata Bahasa N4" },
-  phase_examsprint: { en: "Exam Sprint", id: "Sprint Ujian" },
+  // Levels
+  level: { en: "Level", id: "Level" },
+  level_coming_soon: { en: "Coming soon", id: "Segera hadir" },
 
-  // Day types
+  // Lesson types
   type_diagnostic: { en: "Diagnostic", id: "Diagnostik" },
   type_grammar: { en: "Grammar", id: "Tata Bahasa" },
   "type_vocab-kanji": { en: "Vocab / Kanji", id: "Kosakata / Kanji" },
@@ -153,9 +152,9 @@ export const STR = {
   type_skill: { en: "Skill", id: "Keterampilan" },
 
   // Planner
-  planner_title: { en: "90-Day Planner", id: "Planner 90 Hari" },
+  planner_title: { en: "Planner", id: "Planner" },
   filter_all: { en: "All", id: "Semua" },
-  filter_phase: { en: "Phase", id: "Fase" },
+  filter_level: { en: "Level", id: "Level" },
   filter_type: { en: "Type", id: "Jenis" },
   filter_status: { en: "Status", id: "Status" },
 
@@ -164,7 +163,7 @@ export const STR = {
   status_partial: { en: "In progress", id: "Sebagian" },
   status_done: { en: "Done", id: "Selesai" },
 
-  // Day detail
+  // Lesson detail
   study_task: { en: "Study task", id: "Tugas belajar" },
   suggested_time: { en: "Suggested time", id: "Waktu yang disarankan" },
   original_references: {
@@ -175,15 +174,15 @@ export const STR = {
   exercises: { en: "Exercises", id: "Latihan" },
   open_lesson: { en: "Open full lesson", id: "Buka materi lengkap" },
   content_coming: {
-    en: "Native lesson & exercises for this day are coming. For now, the original references above cover the material.",
-    id: "Materi & latihan untuk hari ini sedang disiapkan. Untuk sekarang, referensi asli di atas sudah mencakup materinya.",
+    en: "Built-in content & exercises for this lesson are coming. For now, the references above cover the material.",
+    id: "Materi & latihan bawaan untuk pelajaran ini sedang disiapkan. Untuk sekarang, referensi di atas sudah mencakup materinya.",
   },
   your_progress: { en: "Your progress", id: "Progresmu" },
   mark_status: { en: "Status", id: "Status" },
   reviewed_label: { en: "Reviewed later", id: "Sudah diulang" },
 
-  // Day score counter
-  day_score: { en: "Day score", id: "Skor hari ini" },
+  // Lesson score counter
+  day_score: { en: "Lesson score", id: "Skor materi" },
   sets_done: { en: "exercises done", id: "latihan selesai" },
   score_so_far: { en: "correct so far", id: "benar sejauh ini" },
   score_breakdown: { en: "Score breakdown", id: "Rincian skor" },
@@ -192,15 +191,16 @@ export const STR = {
   practice_done: { en: "done", id: "selesai" },
   best_streak: { en: "best streak", id: "runtun terbaik" },
   no_exercises_scored: {
-    en: "This day has no scored exercises.",
-    id: "Hari ini tidak ada latihan berskor.",
+    en: "This lesson has no scored exercises.",
+    id: "Materi ini tidak punya latihan berskor.",
   },
   notes_label: { en: "Notes", id: "Catatan" },
   notes_ph: { en: "Mistakes, weak points, reminders…", id: "Kesalahan, titik lemah, pengingat…" },
   saved: { en: "Saved", id: "Tersimpan" },
-  prev_day: { en: "Previous day", id: "Hari sebelumnya" },
-  next_day: { en: "Next day", id: "Hari berikutnya" },
+  prev_lesson: { en: "Previous lesson", id: "Materi sebelumnya" },
+  next_lesson: { en: "Next lesson", id: "Materi berikutnya" },
   back_to_planner: { en: "Back to planner", id: "Kembali ke planner" },
+  back_to_lessons: { en: "All lessons", id: "Semua materi" },
 
   // Exercises
   ex_check: { en: "Check", id: "Periksa" },

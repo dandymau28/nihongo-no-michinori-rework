@@ -1,32 +1,14 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { PLANNER, getDay } from "@/data/planner";
-import { pick } from "@/lib/i18n";
-import { DayDetail } from "@/components/planner/DayDetail";
+import { notFound, permanentRedirect } from "next/navigation";
+import { lessonForLegacyDay } from "@/data/lessons";
 
-export function generateStaticParams() {
-  return PLANNER.map((d) => ({ day: String(d.day) }));
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ day: string }>;
-}): Promise<Metadata> {
-  const { day } = await params;
-  const d = getDay(Number(day));
-  if (!d) return { title: "Day · Nihongo No Michinori" };
-  return { title: `Day ${d.day}: ${pick(d.title, "en")} · Nihongo No Michinori` };
-}
-
-export default async function DayPage({
+/** Links from the original 90-day plan (/day/N) now live at /lessons/<id>. */
+export default async function LegacyDayPage({
   params,
 }: {
   params: Promise<{ day: string }>;
 }) {
   const { day } = await params;
-  const n = Number(day);
-  const d = getDay(n);
-  if (!d || !Number.isInteger(n)) notFound();
-  return <DayDetail day={d!} />;
+  const lesson = /^\d+$/.test(day) ? lessonForLegacyDay(Number(day)) : undefined;
+  if (!lesson) notFound();
+  permanentRedirect(`/lessons/${lesson.id}`);
 }
