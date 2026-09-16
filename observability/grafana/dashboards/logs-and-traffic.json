@@ -176,7 +176,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Slowest 5% of requests",
+      "title": "Response time (p95)",
       "datasource": {
         "type": "loki",
         "uid": "michinori-loki"
@@ -221,7 +221,8 @@
           "queryType": "instant",
           "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__range]) by (site)"
         }
-      ]
+      ],
+      "description": "95 out of 100 requests finished faster than this."
     },
     {
       "id": 5,
@@ -379,7 +380,53 @@
           "unit": "s",
           "decimals": 2
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p90"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -389,8 +436,8 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "legendFormat": "median",
-          "expr": "quantile_over_time(0.5, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
+          "legendFormat": "p90",
+          "expr": "quantile_over_time(0.90, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
         },
         {
           "refId": "B",
@@ -399,10 +446,21 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "legendFormat": "slowest 5%",
+          "legendFormat": "p95",
           "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "legendFormat": "p99",
+          "expr": "quantile_over_time(0.99, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
         }
-      ]
+      ],
+      "description": "p90, p95 and p99 of nginx request time. The gap between them is the shape of the tail: close together means consistent, p99 far above p95 means a few requests are much slower than the rest."
     },
     {
       "id": 7,
@@ -570,9 +628,10 @@
           },
           "queryType": "range",
           "maxLines": 200,
-          "expr": "{job=\"nginx\", stream=\"access\"} | json | status >= 500"
+          "expr": "{job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status >= 500"
         }
-      ]
+      ],
+      "description": "The site only — Grafana's own errors on horus are excluded."
     }
   ]
 }
