@@ -31,6 +31,16 @@ loki.relabel "journal" {
 		target_label  = "service_name"
 	}
 
+	// The app runs as nihongo-no-michinori@3101 or @3102, whichever slot is live, and a
+	// deploy switches between them. Both report as one service, so its history doesn't
+	// restart at every deploy; the `unit` label still says which slot a line came from.
+	rule {
+		source_labels = ["__journal__systemd_unit"]
+		regex         = "nihongo-no-michinori(@[0-9]+)?\\.service"
+		target_label  = "service_name"
+		replacement   = "nihongo-no-michinori"
+	}
+
 	rule {
 		source_labels = ["__journal_priority_keyword"]
 		target_label  = "level"

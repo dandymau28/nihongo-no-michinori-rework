@@ -379,6 +379,28 @@ The log search is in **Explore → Logs**. Useful queries:
 | Did the deploy restart cleanly? | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "Ready"` |
 | Database complaints | `{job="journal", unit="postgresql@16-main.service"}` |
 
+### One stream across deploys and restarts
+
+Logs are never lost on a restart or a deploy — Loki keeps them for 30 days no matter what
+the app does. What changes is the label. The app runs as `nihongo-no-michinori@3101` or
+`@3102`, whichever slot is live, and a deploy switches to the other one, so anything keyed
+to a single unit looks like it started from scratch.
+
+Alloy therefore reports both slots under one `service_name`:
+
+```
+{service_name="nihongo-no-michinori"}
+```
+
+That's the query to use for "the app, all of it, whatever happened to it" — Grafana's Logs
+Drilldown lists it once instead of once per slot. The `unit` label is still on every line
+when you need to know which slot wrote it (`| unit="nihongo-no-michinori@3102.service"`),
+and a deploy is visible as the handover between the two.
+
+Lines shipped **before** this relabelling kept the label they had, so history from then is
+under the old per-slot names. The dashboards query `unit=~"nihongo-no-michinori.*"`, which
+matches both old and new lines, so they show the full history either way.
+
 ### The app's own events
 
 The app writes one JSON line per meaningful action (`src/lib/server/log.ts`). They're in
