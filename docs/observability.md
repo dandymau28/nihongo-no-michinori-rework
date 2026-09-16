@@ -445,10 +445,15 @@ sudo systemctl restart grafana-server && sudo journalctl -u grafana-server -n 30
 Expect no provisioning errors. Then in the UI:
 
 - **Alerting → Alert rules** — all three listed under *Nihongo No Michinori → Site*, state **Normal**.
-- **Alerting → Notification policies** — make sure the default policy points at your
-  contact point (or add a child route on the `severity` label: the 5xx and app-error rules
-  are `severity=critical`, the 4xx rule `severity=warning`). Then **Contact points → Test**
-  to confirm the message actually arrives.
+- **Alerting → Contact points** — all three rules are pinned to the contact point named
+  **Argus Lumina Helper** (`notification_settings.receiver` in `rules.yaml`), so they skip
+  the notification policy tree entirely. The name has to match exactly: rename that contact
+  point in Grafana and delivery stops silently, so change it in `rules.yaml` at the same
+  time. Press **Test** on the contact point to confirm it works on its own.
+
+  To route by severity instead, delete the `notification_settings` block from a rule and
+  let the policy tree handle it — the 5xx and app-error rules carry `severity=critical`,
+  the 4xx rule `severity=warning`.
 
 An email contact point also needs SMTP, which Grafana doesn't have by default. Add it to
 the root-only env file if you use one (a Telegram, Discord or webhook contact point needs
@@ -553,7 +558,8 @@ Otherwise a Grafana restart brings back the file's version.
 | Symptom | Check | Usual cause |
 |---|---|---|
 | A service ignores the config you installed | `systemctl show -p ExecStart --value <unit>` | It was never restarted (apt started it at install), or its unit reads a different file |
-| Alerts never arrive | **Alerting → Contact points → Test** | No notification policy routes to your contact point, or (for email) the `GF_SMTP_*` lines are missing from `/etc/grafana/db.env` |
+| Alerts never arrive | **Alerting → Contact points → Test** | The contact point named in `rules.yaml` was renamed or deleted, or (for email) the `GF_SMTP_*` lines are missing from `/etc/grafana/db.env` |
+| Grafana rejects `notification_settings` | `sudo journalctl -u grafana-server \| grep -i provision` | Grafana older than 10.4 — drop that block and route with a notification policy instead |
 | An alert fires all night | the **Logs & traffic** dashboard for that window | The threshold is below your normal traffic — raise it in `rules.yaml` |
 | `install: invalid user 'loki'` | `getent passwd loki` | That build doesn't create the user — use the `User=` from `systemctl show -p User --value loki` (empty means root) |
 | Grafana won't load | `sudo journalctl -u grafana-server -n 50` | Port 3001 taken, or a bad provisioning file |

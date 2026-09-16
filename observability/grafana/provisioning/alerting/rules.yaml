@@ -24,6 +24,11 @@ groups:
             on the "Logs & traffic" dashboard.
         labels:
           severity: critical
+        # Straight to this contact point, bypassing the notification policy tree.
+        # The name must match Alerting → Contact points exactly; rename it there and
+        # delivery stops without an error.
+        notification_settings:
+          receiver: "Argus Lumina Helper"
         isPaused: false
         noDataState: OK
         execErrState: Error
@@ -87,6 +92,11 @@ groups:
             trace is several lines, so a single exception can reach this threshold.
         labels:
           severity: critical
+        # Straight to this contact point, bypassing the notification policy tree.
+        # The name must match Alerting → Contact points exactly; rename it there and
+        # delivery stops without an error.
+        notification_settings:
+          receiver: "Argus Lumina Helper"
         isPaused: false
         noDataState: OK
         execErrState: Error
@@ -152,6 +162,8 @@ groups:
             links. See "Most requested pages" on the "Logs & traffic" dashboard.
         labels:
           severity: warning
+        notification_settings:
+          receiver: "Argus Lumina Helper"
         isPaused: false
         noDataState: OK
         execErrState: Error
