@@ -72,7 +72,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__range]))",
+          "expr": "sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__range]))",
           "format": "table"
         },
         {
@@ -82,7 +82,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__range]))",
+          "expr": "sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__range]))",
           "format": "table"
         },
         {
@@ -92,7 +92,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range]))",
+          "expr": "sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range]))",
           "format": "table"
         }
       ]
@@ -146,7 +146,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | feature != \"\" [$__auto]))",
+          "expr": "sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | feature != \"\" [$__auto]))",
           "legendFormat": "{{feature}}"
         }
       ]
@@ -201,7 +201,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__auto])) / sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__auto]))",
+          "expr": "sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__auto])) / sum by (feature) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__auto]))",
           "legendFormat": "{{feature}}"
         }
       ]
@@ -251,7 +251,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"practice.session_completed\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"practice.session_completed\" [$__range]))"
         }
       ]
     },
@@ -300,7 +300,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range]))"
         }
       ]
     },
@@ -349,7 +349,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.lessons_added\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.lessons_added\" [$__range]))"
         }
       ]
     },
@@ -398,7 +398,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"progress.save\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"progress.save\" [$__range]))"
         }
       ]
     },

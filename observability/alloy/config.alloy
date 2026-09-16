@@ -19,6 +19,14 @@ loki.write "local" {
 loki.relabel "journal" {
 	forward_to = []
 
+	// Set explicitly: the `labels` argument below does not survive relabelling, which
+	// left journal streams with no `job` at all and every dashboard query that filtered
+	// on it returning nothing.
+	rule {
+		target_label = "job"
+		replacement  = "journal"
+	}
+
 	rule {
 		source_labels = ["__journal__systemd_unit"]
 		target_label  = "unit"

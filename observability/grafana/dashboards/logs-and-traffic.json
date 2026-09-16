@@ -494,7 +494,7 @@
           },
           "queryType": "range",
           "maxLines": 500,
-          "expr": "{job=\"journal\", unit=~\"nihongo-no-michinori.*\"}"
+          "expr": "{unit=~\"nihongo-no-michinori.*\"}"
         }
       ]
     },
@@ -530,7 +530,7 @@
           },
           "queryType": "range",
           "maxLines": 500,
-          "expr": "{job=\"journal\"} |~ \"(?i)(error|fatal|panic|unhandled|refused)\""
+          "expr": "{unit=~\".+\"} |~ \"(?i)(error|fatal|panic|unhandled|refused)\""
         }
       ]
     },

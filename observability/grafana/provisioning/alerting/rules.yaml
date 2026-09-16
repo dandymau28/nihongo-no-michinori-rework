@@ -20,7 +20,7 @@ groups:
           summary: The site returned {{ $values.B }} server errors in 2 minutes.
           description: >-
             nginx answered 5xx. Check the app log
-            ({job="journal", unit=~"nihongo-no-michinori.*"}) and the failed requests panel
+            ({unit=~"nihongo-no-michinori.*"}) and the failed requests panel
             on the "Logs & traffic" dashboard.
         labels:
           severity: critical
@@ -87,7 +87,7 @@ groups:
           summary: The app logged {{ $values.B }} error lines in a minute.
           description: >-
             Something is throwing inside the app, not just failing at the edge. Read them
-            with {job="journal", unit=~"nihongo-no-michinori.*"} |~ "(?i)(error|unhandled|exception)",
+            with {unit=~"nihongo-no-michinori.*"} |~ "(?i)(error|unhandled|exception)",
             or open the "App log" panel on the "Logs & traffic" dashboard. Note one stack
             trace is several lines, so a single exception can reach this threshold.
         labels:
@@ -115,7 +115,7 @@ groups:
               # Backticks so the regex needs no escaping. Matches both the app's own
               # event lines (evt: auth.email_failed) and raw Node stack traces.
               expr: >-
-                sum(count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |~ `(?i)(error|unhandled|exception)` [1m]))
+                sum(count_over_time({unit=~"nihongo-no-michinori.*"} |~ `(?i)(error|unhandled|exception)` [1m]))
               intervalMs: 60000
               maxDataPoints: 43200
           - refId: B

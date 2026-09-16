@@ -76,7 +76,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_pct [$__auto]) by (unit)"
+          "expr": "last_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -142,7 +142,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_used_pct [$__auto]) by (unit)"
+          "expr": "last_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_used_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -208,7 +208,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_free_gb [$__auto]) by (unit)"
+          "expr": "last_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_free_gb [$__auto]) by (unit)"
         }
       ]
     },
@@ -275,7 +275,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
+          "expr": "last_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
         }
       ]
     },
@@ -327,7 +327,7 @@
           },
           "queryType": "range",
           "legendFormat": "busy",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
         },
         {
           "refId": "B",
@@ -337,7 +337,7 @@
           },
           "queryType": "range",
           "legendFormat": "peak",
-          "expr": "max_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
+          "expr": "max_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -388,7 +388,7 @@
           },
           "queryType": "range",
           "legendFormat": "used",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_mb [$__auto]) by (unit)"
         },
         {
           "refId": "B",
@@ -398,7 +398,7 @@
           },
           "queryType": "range",
           "legendFormat": "swap",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
         }
       ]
     },
@@ -458,7 +458,7 @@
           },
           "queryType": "range",
           "legendFormat": "app",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap app_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap app_mb [$__auto]) by (unit)"
         },
         {
           "refId": "B",
@@ -468,7 +468,7 @@
           },
           "queryType": "range",
           "legendFormat": "postgres",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap postgres_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap postgres_mb [$__auto]) by (unit)"
         },
         {
           "refId": "C",
@@ -478,7 +478,7 @@
           },
           "queryType": "range",
           "legendFormat": "loki",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap loki_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap loki_mb [$__auto]) by (unit)"
         },
         {
           "refId": "D",
@@ -488,7 +488,7 @@
           },
           "queryType": "range",
           "legendFormat": "grafana",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap grafana_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap grafana_mb [$__auto]) by (unit)"
         },
         {
           "refId": "E",
@@ -498,7 +498,7 @@
           },
           "queryType": "range",
           "legendFormat": "alloy",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap alloy_mb [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap alloy_mb [$__auto]) by (unit)"
         }
       ]
     },
@@ -551,7 +551,7 @@
           },
           "queryType": "range",
           "legendFormat": "load",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap load1 [$__auto]) by (unit)"
+          "expr": "avg_over_time({unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap load1 [$__auto]) by (unit)"
         }
       ]
     },
@@ -587,7 +587,7 @@
           },
           "queryType": "range",
           "maxLines": 300,
-          "expr": "{job=\"journal\"} |~ \"(?i)(started|stopped|failed|out of memory|oom)\" |~ \"(?i)(nihongo|loki|grafana|alloy|postgres|nginx)\""
+          "expr": "{unit=~\".+\"} |~ \"(?i)(started|stopped|failed|out of memory|oom)\" |~ \"(?i)(nihongo|loki|grafana|alloy|postgres|nginx)\""
         }
       ]
     }

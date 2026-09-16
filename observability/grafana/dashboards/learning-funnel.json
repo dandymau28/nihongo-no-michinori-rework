@@ -59,7 +59,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" | anonId != \"\" [$__range])))",
           "legendFormat": "1 · opened a lesson"
         },
         {
@@ -69,7 +69,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" | anonId != \"\" [$__range])))",
           "legendFormat": "2 · started it"
         },
         {
@@ -79,7 +79,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" | anonId != \"\" [$__range])))",
           "legendFormat": "3 · started an exercise"
         },
         {
@@ -89,7 +89,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" | anonId != \"\" [$__range])))",
           "legendFormat": "4 · finished an exercise"
         },
         {
@@ -99,7 +99,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" | anonId != \"\" [$__range])))",
           "legendFormat": "5 · finished the lesson"
         }
       ]
@@ -149,7 +149,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"app.opened\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"app.opened\" | anonId != \"\" [$__range])))",
           "legendFormat": "1 · opened the site"
         },
         {
@@ -159,7 +159,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" | anonId != \"\" [$__range])))",
+          "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" | anonId != \"\" [$__range])))",
           "legendFormat": "2 · started signing up"
         },
         {
@@ -169,7 +169,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" | userId != \"\" [$__range])))",
+          "expr": "count(sum by (userId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" | userId != \"\" [$__range])))",
           "legendFormat": "3 · account created"
         },
         {
@@ -179,7 +179,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signin\" | userId != \"\" [$__range])))",
+          "expr": "count(sum by (userId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signin\" | userId != \"\" [$__range])))",
           "legendFormat": "4 · signed in"
         },
         {
@@ -189,7 +189,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" | userId != \"\" [$__range])))",
+          "expr": "count(sum by (userId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" | userId != \"\" [$__range])))",
           "legendFormat": "5 · started a planner"
         }
       ]
@@ -257,7 +257,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
         }
       ]
     },
@@ -323,7 +323,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range]))"
         }
       ]
     },
@@ -390,7 +390,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range]))"
         }
       ]
     },
@@ -456,7 +456,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
         }
       ]
     },
@@ -522,7 +522,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" [$__range]))"
         }
       ]
     },
@@ -588,7 +588,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "instant",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range]))"
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range]))"
         }
       ]
     },
@@ -637,7 +637,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__auto]))",
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__auto]))",
           "legendFormat": "opened a lesson"
         },
         {
@@ -647,7 +647,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto]))",
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto]))",
           "legendFormat": "started an exercise"
         },
         {
@@ -657,7 +657,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto]))",
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto]))",
           "legendFormat": "finished an exercise"
         },
         {
@@ -667,7 +667,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__auto]))",
+          "expr": "sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__auto]))",
           "legendFormat": "finished the lesson"
         }
       ]
@@ -720,7 +720,7 @@
             "uid": "michinori-loki"
           },
           "queryType": "range",
-          "expr": "1 - (sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto])))",
+          "expr": "1 - (sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto])) / sum(count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto])))",
           "legendFormat": "drop-out"
         }
       ]

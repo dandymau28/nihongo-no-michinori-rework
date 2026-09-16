@@ -374,13 +374,13 @@ The log search is in **Explore → Logs**. Useful queries:
 
 | Question | Query |
 |---|---|
-| What did the app print? | `{job="journal", unit=~"nihongo-no-michinori.*"}` |
-| Any errors right now? | `{job="journal"} \|~ "(?i)(error\|fatal\|unhandled)"` |
+| What did the app print? | `{unit=~"nihongo-no-michinori.*"}` |
+| Any errors right now? | `{unit=~".+"} \|~ "(?i)(error\|fatal\|unhandled)"` |
 | What broke for visitors? | `{job="nginx", stream="access"} \| json \| status >= 500` |
 | Who is hammering the site? | `topk(10, sum by (ip) (count_over_time({job="nginx", stream="access"} \| json [1h])))` |
 | Bot probes (the `/wp-admin` kind) | `{job="nginx", stream="access"} \| json \| status = 404` |
-| Did the deploy restart cleanly? | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "Ready"` |
-| Database complaints | `{job="journal", unit="postgresql@16-main.service"}` |
+| Did the deploy restart cleanly? | `{unit=~"nihongo-no-michinori.*"} \|= "Ready"` |
+| Database complaints | `{unit="postgresql@16-main.service"}` |
 
 ### One stream across deploys and restarts
 
@@ -441,11 +441,11 @@ the journal alongside everything else, so the same search finds them:
 
 | Question | Query |
 |---|---|
-| Everything one learner did | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| userId="<id>"` |
-| Did their confirmation email go out? | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt=~"auth.email.*\|email.*"` |
-| Planners started today | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt="planner.start"` |
-| Lessons being finished | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt="progress.save" \| status="done"` |
-| Slow planner rebuilds | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "\"ms\":" \| json \| ms > 500` |
+| Everything one learner did | `{unit=~"nihongo-no-michinori.*"} \| json \| userId="<id>"` |
+| Did their confirmation email go out? | `{unit=~"nihongo-no-michinori.*"} \| json \| evt=~"auth.email.*\|email.*"` |
+| Planners started today | `{unit=~"nihongo-no-michinori.*"} \| json \| evt="planner.start"` |
+| Lessons being finished | `{unit=~"nihongo-no-michinori.*"} \| json \| evt="progress.save" \| status="done"` |
+| Slow planner rebuilds | `{unit=~"nihongo-no-michinori.*"} \|= "\"ms\":" \| json \| ms > 500` |
 
 The events are `auth.signup`, `auth.signin`, `auth.email_requested`, `auth.email_failed`,
 `email.sent`, `email.skipped`, `planner.start`, `planner.settings`,
@@ -507,7 +507,7 @@ rather than filling the disk.
 In LogQL, `| json` flattens `props`, so the fields are `props_correct`, `props_setId`:
 
 ```
-sum by (feature) (count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |= "\"evt\":" | json | evt="question.answered" | props_correct="true" [1h]))
+sum by (feature) (count_over_time({unit=~"nihongo-no-michinori.*"} |= "\"evt\":" | json | evt="question.answered" | props_correct="true" [1h]))
 ```
 
 Set `NEXT_PUBLIC_TELEMETRY=off` to turn the browser side off completely (useful in
