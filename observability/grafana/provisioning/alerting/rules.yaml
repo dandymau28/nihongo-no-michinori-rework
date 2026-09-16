@@ -1,0 +1,140 @@
+# Install to /etc/grafana/provisioning/alerting/rules.yaml
+# Alert rules, evaluated every minute against the nginx access log in Loki.
+#
+# Each rule is three steps: A asks Loki how many requests in the last 2 minutes matched,
+# B takes that single number, C compares it to the threshold. `noDataState: OK` matters —
+# a quiet night produces no log lines at all, and that is not a problem to wake up for.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Site
+    folder: Nihongo No Michinori
+    interval: 1m
+    rules:
+      - uid: michinori-5xx
+        title: Site is failing (5xx)
+        condition: C
+        for: 0m
+        annotations:
+          summary: The site returned {{ $values.B }} server errors in 2 minutes.
+          description: >-
+            nginx answered 5xx. Check the app log
+            ({job="journal", unit=~"nihongo-no-michinori.*"}) and the failed requests panel
+            on the "Logs & traffic" dashboard.
+        labels:
+          severity: critical
+        isPaused: false
+        noDataState: OK
+        execErrState: Error
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: michinori-loki
+            model:
+              refId: A
+              datasource:
+                type: loki
+                uid: michinori-loki
+              queryType: instant
+              expr: >-
+                sum(count_over_time({job="nginx", stream="access", site="michinori"} | json | status >= 500 [2m]))
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 5
+              datasource:
+                type: __expr__
+                uid: __expr__
+
+      - uid: michinori-4xx
+        title: Lots of rejected requests (4xx)
+        condition: C
+        # Two minutes above the threshold, so one bot burst doesn't page you.
+        for: 2m
+        annotations:
+          summary: "{{ $values.B }} requests were rejected in 2 minutes (4xx)."
+          description: >-
+            Usually a bot scanning for /wp-admin and friends, which is noise. Worth looking
+            at if it keeps up, or if the paths are real pages — that would mean broken
+            links. See "Most requested pages" on the "Logs & traffic" dashboard.
+        labels:
+          severity: warning
+        isPaused: false
+        noDataState: OK
+        execErrState: Error
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: michinori-loki
+            model:
+              refId: A
+              datasource:
+                type: loki
+                uid: michinori-loki
+              queryType: instant
+              # To ignore bot 404s and alert only on rejections of real pages, add
+              # `| status != 404` to this line and lower the threshold in C.
+              expr: >-
+                sum(count_over_time({job="nginx", stream="access", site="michinori"} | json | status >= 400 | status < 500 [2m]))
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 50
+              datasource:
+                type: __expr__
+                uid: __expr__

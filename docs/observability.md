@@ -404,13 +404,29 @@ these logs are the place where individual activity is visible, by design, so tha
 learner reporting "I never got the email" can be answered. To stop that, hash the id in
 `logEvent` — every caller goes through that one function.
 
-### Email alerts (optional)
+## Alerts
 
-Grafana can email you when something breaks, through the same Resend SMTP the app uses.
-Add the credentials to the root-only env file (the password is not in git):
+Two rules ship with this repo, both watching the nginx access log over a 2-minute window,
+evaluated every minute:
+
+| Rule | Fires when | Severity |
+|---|---|---|
+| **Site is failing (5xx)** | more than 5 server errors in 2 minutes | critical, fires immediately |
+| **Lots of rejected requests (4xx)** | more than 50 rejections in 2 minutes, sustained for 2 minutes | warning |
+
+Both are set to **stay quiet when there are no logs at all** — a quiet night is not an
+outage. The 4xx rule counts bot probes for `/wp-admin` and the like, which is the usual
+cause; `rules.yaml` has a comment showing how to ignore 404s and alert only on rejections
+of real pages.
+
+### Turn them on
+
+Alerts show up in Grafana's **Alerting → Alert rules** with no setup, but to *reach* you
+they need SMTP and an address. Both live in the root-only env file, never in git:
 
 ```bash
 sudo tee -a /etc/grafana/db.env > /dev/null <<'EOF'
+ALERT_EMAIL=you@example.com
 GF_SMTP_ENABLED=true
 GF_SMTP_HOST=smtp.resend.com:465
 GF_SMTP_USER=resend
@@ -421,14 +437,38 @@ EOF
 ```
 
 ```bash
-sudo systemctl restart grafana-server
+sudo mkdir -p /etc/grafana/provisioning/alerting && sudo install -m 644 $OBS/grafana/provisioning/alerting/*.yaml /etc/grafana/provisioning/alerting/
 ```
 
-Then in Grafana: **Alerting → Contact points** (add your email, "Test" it), then
-**Alerting → Alert rules → New alert rule**. Two worth having:
+```bash
+sudo systemctl restart grafana-server && sudo journalctl -u grafana-server -n 30 --no-pager | grep -i -E 'alert|provision|error'
+```
 
-1. **Site failing** — query `sum(count_over_time({job="nginx", stream="access"} | json | status >= 500 [5m]))`, fire when above 5 for 5 minutes.
-2. **App restarting in a loop** — query `sum(count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |= "Started" [15m]))`, fire when above 4.
+Expect no provisioning errors. Then check in the UI:
+
+- **Alerting → Alert rules** — both rules listed under *Nihongo No Michinori → Site*, state **Normal**.
+- **Alerting → Contact points** — one contact point, `email`, with your address. Press **Test** and confirm the message arrives.
+
+### Prove it fires
+
+```bash
+for i in $(seq 1 60); do curl -s -o /dev/null https://nihongo-no-michinori.xerzack.web.id/definitely-not-a-page-$i; done
+```
+
+That's 60 404s in a few seconds. Within about three minutes the 4xx rule should go to
+**Firing** and the email should arrive. It returns to Normal on its own once the two
+minutes pass with no more hits. (There's no safe way to fake a 5xx from outside, so trust
+the 4xx test for both — they're the same rule shape with a different threshold.)
+
+### Tuning
+
+The thresholds assume a quiet site. Once you have real traffic, open **Logs & traffic**,
+look at what a normal 2 minutes actually contains, and edit the numbers in
+`rules.yaml` (the `params` under refId C), then reinstall and restart Grafana. Alerting at
+a level you routinely cross is worse than no alert, because you'll learn to ignore it.
+
+Because the notification policy is provisioned, Grafana's UI shows it as read-only —
+change it in `contact-points.yaml` and restart, not in the browser.
 
 ## Picking up changes from this repo
 
@@ -446,6 +486,7 @@ bash /var/www/nihongo-no-michinori/deploy.sh && export OBS=/var/www/nihongo-no-m
 | Alloy config | `sudo install -m 644 $OBS/alloy/config.alloy /etc/alloy/config.alloy && sudo systemctl restart alloy` |
 | Loki config | `sudo install -m 644 $OBS/loki/config.yml /etc/loki/config.yml && sudo systemctl restart loki` |
 | `host-stats.sh` | `sudo install -m 755 $OBS/bin/host-stats.sh /usr/local/bin/host-stats.sh` |
+| Alert rules | `sudo install -m 644 $OBS/grafana/provisioning/alerting/*.yaml /etc/grafana/provisioning/alerting/ && sudo systemctl restart grafana-server` |
 | App event logging | nothing — it ships with the deploy |
 
 Re-running the SQL is safe: it replaces the views and leaves the role and its password
@@ -485,6 +526,8 @@ Otherwise a Grafana restart brings back the file's version.
 | Symptom | Check | Usual cause |
 |---|---|---|
 | A service ignores the config you installed | `systemctl show -p ExecStart --value <unit>` | It was never restarted (apt started it at install), or its unit reads a different file |
+| Alerts never arrive | `sudo journalctl -u grafana-server \| grep -i smtp` | `ALERT_EMAIL` or the `GF_SMTP_*` lines missing from `/etc/grafana/db.env`; test with **Contact points → Test** |
+| An alert fires all night | the **Logs & traffic** dashboard for that window | The threshold is below your normal traffic — raise it in `rules.yaml` |
 | `install: invalid user 'loki'` | `getent passwd loki` | That build doesn't create the user — use the `User=` from `systemctl show -p User --value loki` (empty means root) |
 | Grafana won't load | `sudo journalctl -u grafana-server -n 50` | Port 3001 taken, or a bad provisioning file |
 | "Datasource not found" on a panel | `sudo journalctl -u grafana-server \| grep -i provision` | The datasource type name — try `type: postgres` in `michinori.yml` |
