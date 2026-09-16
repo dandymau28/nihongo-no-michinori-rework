@@ -92,17 +92,32 @@ is older than the repo expects — tell me and we'll switch those two to release
 sudo apt install -y grafana loki alloy
 ```
 
-The packages create the `grafana`, `loki` and `alloy` users and their services, all
-disabled until we configure them.
+Each package installs a systemd service and starts it straight away, running its own
+packaged config. The steps below replace those configs.
+
+> **apt already started them.** `systemctl enable --now` does nothing to a service that
+> is already running, so after replacing a config file you must `restart` — otherwise the
+> packaged defaults keep running and nothing below behaves as described.
 
 ## 4. Loki: store the logs
 
-```bash
-sudo install -o loki -g loki -m 644 $OBS/loki/config.yml /etc/loki/config.yml
-```
+The package decides which user Loki runs as and which file its unit reads, and that
+differs between builds. Take both from the unit instead of assuming:
 
 ```bash
-sudo mkdir -p /var/lib/loki/{chunks,rules,wal,compactor} && sudo chown -R loki:loki /var/lib/loki
+systemctl show -p User -p ExecStart --value loki
+```
+
+An empty `User` means it runs as root; the config path is the `-config.file=` in the
+`ExecStart` line. The next block reads them itself, so run it as one block:
+
+```bash
+LOKI_USER=$(systemctl show -p User --value loki); LOKI_USER=${LOKI_USER:-root}
+LOKI_CONF=$(systemctl show -p ExecStart --value loki | grep -oE '\-config\.file=[^ ;]+' | cut -d= -f2); LOKI_CONF=${LOKI_CONF:-/etc/loki/config.yml}
+echo "loki runs as $LOKI_USER and reads $LOKI_CONF"
+sudo install -m 644 $OBS/loki/config.yml "$LOKI_CONF"
+sudo mkdir -p /var/lib/loki/{chunks,rules,wal,compactor}
+sudo chown -R "$LOKI_USER" /var/lib/loki
 ```
 
 ```bash
@@ -110,18 +125,27 @@ sudo mkdir -p /etc/systemd/system/loki.service.d && sudo install -m 644 $OBS/sys
 ```
 
 ```bash
-sudo systemctl daemon-reload && sudo systemctl enable --now loki
+sudo systemctl daemon-reload && sudo systemctl enable loki && sudo systemctl restart loki
 ```
 
 ```bash
-curl -s http://127.0.0.1:3110/ready
+curl -sS http://127.0.0.1:3110/ready
 ```
 
 Expect `ready`. (For the first 15 seconds it says it's still starting — wait and retry.)
 
+```bash
+sudo ss -ltnp | grep -E '3100|3110'
+```
+
+Expect exactly one line, `127.0.0.1:3110`. A line on `*:3100` means the old process is
+still there with the packaged config — Loki didn't restart, or its unit reads a different
+file than the one you just wrote.
+
 ## 5. Alloy: ship the logs
 
-Alloy needs to read the journal and nginx's log files:
+Alloy needs to read the journal and nginx's log files. Group changes only take effect
+when the process restarts, which is the last command of this step:
 
 ```bash
 sudo usermod -a -G systemd-journal,adm alloy
@@ -136,11 +160,11 @@ sudo mkdir -p /etc/systemd/system/alloy.service.d && sudo install -m 644 $OBS/sy
 ```
 
 ```bash
-sudo systemctl daemon-reload && sudo systemctl enable --now alloy
+sudo systemctl daemon-reload && sudo systemctl enable alloy && sudo systemctl restart alloy
 ```
 
 ```bash
-curl -s "http://127.0.0.1:3110/loki/api/v1/labels"
+curl -sS "http://127.0.0.1:3110/loki/api/v1/labels"
 ```
 
 Expect JSON listing labels including `job` and `unit` — logs are arriving. (nginx's own
@@ -236,11 +260,11 @@ sudo mkdir -p /var/lib/grafana/dashboards && sudo install -o grafana -g grafana 
 ```
 
 ```bash
-sudo systemctl daemon-reload && sudo systemctl enable --now grafana-server
+sudo systemctl daemon-reload && sudo systemctl enable grafana-server && sudo systemctl restart grafana-server
 ```
 
 ```bash
-curl -s http://127.0.0.1:3001/api/health
+curl -sS http://127.0.0.1:3001/api/health
 ```
 
 Expect `"database": "ok"`.
@@ -364,6 +388,8 @@ Otherwise a Grafana restart brings back the file's version.
 
 | Symptom | Check | Usual cause |
 |---|---|---|
+| A service ignores the config you installed | `systemctl show -p ExecStart --value <unit>` | It was never restarted (apt started it at install), or its unit reads a different file |
+| `install: invalid user 'loki'` | `getent passwd loki` | That build doesn't create the user — use the `User=` from `systemctl show -p User --value loki` (empty means root) |
 | Grafana won't load | `sudo journalctl -u grafana-server -n 50` | Port 3001 taken, or a bad provisioning file |
 | "Datasource not found" on a panel | `sudo journalctl -u grafana-server \| grep -i provision` | The datasource type name — try `type: postgres` in `michinori.yml` |
 | Usage panels error, logs fine | `sudo -u postgres psql -d nihongo_no_michinori -c 'select 1 from metrics.totals'` | Views missing, or the password in `/etc/grafana/db.env` doesn't match the role |
