@@ -2,21 +2,40 @@
   "uid": "michinori-host",
   "title": "Server health",
   "description": "CPU, memory, swap and disk, sampled once a minute by host-stats.timer and read back out of the logs. One sample a minute is the resolution; there is no metrics database.",
-  "tags": ["michinori"],
+  "tags": [
+    "michinori"
+  ],
   "timezone": "browser",
   "editable": true,
   "schemaVersion": 39,
   "refresh": "1m",
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
       "type": "gauge",
       "title": "Memory used",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
@@ -26,13 +45,24 @@
           "min": 0,
           "max": 100,
           "decimals": 0,
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 75 },
-              { "color": "red", "value": 90 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
             ]
           }
         },
@@ -41,9 +71,12 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_pct [$__auto])"
+          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -51,10 +84,24 @@
       "id": 2,
       "type": "gauge",
       "title": "Disk used",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
@@ -64,13 +111,24 @@
           "min": 0,
           "max": 100,
           "decimals": 0,
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 70 },
-              { "color": "red", "value": 85 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
             ]
           }
         },
@@ -79,9 +137,12 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_used_pct [$__auto])"
+          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_used_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -89,10 +150,24 @@
       "id": 3,
       "type": "stat",
       "title": "Disk free",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "area",
         "textMode": "auto",
@@ -102,13 +177,24 @@
         "defaults": {
           "unit": "decgbytes",
           "decimals": 1,
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 3 },
-              { "color": "green", "value": 6 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "green",
+                "value": 6
+              }
             ]
           }
         },
@@ -117,9 +203,12 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_free_gb [$__auto])"
+          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap disk_free_gb [$__auto]) by (unit)"
         }
       ]
     },
@@ -128,10 +217,24 @@
       "type": "stat",
       "title": "Swap in use",
       "description": "A little swap is fine. Steadily climbing swap means something is over its memory budget.",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "area",
         "textMode": "auto",
@@ -141,13 +244,24 @@
         "defaults": {
           "unit": "decmbytes",
           "decimals": 0,
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 512 },
-              { "color": "red", "value": 1536 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 512
+              },
+              {
+                "color": "red",
+                "value": 1536
+              }
             ]
           }
         },
@@ -156,9 +270,12 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
-          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto])"
+          "expr": "last_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
         }
       ]
     },
@@ -166,15 +283,36 @@
       "id": 5,
       "type": "timeseries",
       "title": "CPU",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "fieldConfig": {
         "defaults": {
-          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "axisSoftMin": 0, "axisSoftMax": 100 },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "axisSoftMin": 0,
+            "axisSoftMax": 100
+          },
           "unit": "percent",
           "decimals": 1
         },
@@ -183,17 +321,23 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "busy",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
         },
         {
           "refId": "B",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "peak",
-          "expr": "max_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto])"
+          "expr": "max_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap cpu_pct [$__auto]) by (unit)"
         }
       ]
     },
@@ -201,55 +345,33 @@
       "id": 6,
       "type": "timeseries",
       "title": "Memory and swap",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "axisSoftMin": 0 },
-          "unit": "decmbytes",
-          "decimals": 0
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
-          "queryType": "range",
-          "legendFormat": "used",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_mb [$__auto])"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
-          "queryType": "range",
-          "legendFormat": "swap",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto])"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
         }
-      ]
-    },
-    {
-      "id": 7,
-      "type": "timeseries",
-      "title": "Memory by service",
-      "description": "Straight from systemd. The app counts both release slots, so it doubles briefly during a deploy.",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 14 },
-      "options": {
-        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["lastNotNull", "max"] },
-        "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 25,
-            "lineWidth": 1,
-            "stacking": { "mode": "normal", "group": "A" },
+            "fillOpacity": 15,
+            "lineWidth": 2,
             "axisSoftMin": 0
           },
           "unit": "decmbytes",
@@ -260,38 +382,123 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
-          "legendFormat": "app",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap app_mb [$__auto])"
+          "legendFormat": "used",
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap mem_used_mb [$__auto]) by (unit)"
         },
         {
           "refId": "B",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "legendFormat": "swap",
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap swap_used_mb [$__auto]) by (unit)"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Memory by service",
+      "description": "Straight from systemd. The app counts both release slots, so it doubles briefly during a deploy.",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          },
+          "unit": "decmbytes",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "legendFormat": "app",
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap app_mb [$__auto]) by (unit)"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "postgres",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap postgres_mb [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap postgres_mb [$__auto]) by (unit)"
         },
         {
           "refId": "C",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "loki",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap loki_mb [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap loki_mb [$__auto]) by (unit)"
         },
         {
           "refId": "D",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "grafana",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap grafana_mb [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap grafana_mb [$__auto]) by (unit)"
         },
         {
           "refId": "E",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "alloy",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap alloy_mb [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap alloy_mb [$__auto]) by (unit)"
         }
       ]
     },
@@ -300,15 +507,36 @@
       "type": "timeseries",
       "title": "Load average (1 min)",
       "description": "Above 1.0 means work is queueing for the CPU.",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 14 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false },
-        "tooltip": { "mode": "single", "sort": "none" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "fieldConfig": {
         "defaults": {
-          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "axisSoftMin": 0, "axisSoftMax": 2 },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "axisSoftMin": 0,
+            "axisSoftMax": 2
+          },
           "unit": "short",
           "decimals": 2
         },
@@ -317,10 +545,13 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "load",
-          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap load1 [$__auto])"
+          "expr": "avg_over_time({job=\"journal\", unit=\"host-stats.service\"} | json | __error__=\"\" | unwrap load1 [$__auto]) by (unit)"
         }
       ]
     },
@@ -329,8 +560,16 @@
       "type": "logs",
       "title": "Services starting, stopping and failing",
       "description": "Deploys show up here as the app's two slots swapping over.",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 23 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -342,7 +581,10 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "maxLines": 300,
           "expr": "{job=\"journal\"} |~ \"(?i)(started|stopped|failed|out of memory|oom)\" |~ \"(?i)(nihongo|loki|grafana|alloy|postgres|nginx)\""

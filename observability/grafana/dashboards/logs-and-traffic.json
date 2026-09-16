@@ -2,34 +2,62 @@
   "uid": "michinori-logs",
   "title": "Logs & traffic",
   "description": "What the server did: nginx requests, app logs from the systemd journal, errors.",
-  "tags": ["michinori"],
+  "tags": [
+    "michinori"
+  ],
   "timezone": "browser",
   "editable": true,
   "schemaVersion": 39,
   "refresh": "1m",
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
       "type": "stat",
       "title": "Requests",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "fixed", "fixedColor": "text" }, "unit": "short" },
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "instant",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} [$__range]))"
         }
@@ -39,10 +67,24 @@
       "id": 2,
       "type": "stat",
       "title": "Failed (5xx)",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "auto",
@@ -50,13 +92,21 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "unit": "short",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -65,7 +115,10 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "instant",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status >= 500 [$__range]))"
         }
@@ -75,23 +128,46 @@
       "id": 3,
       "type": "stat",
       "title": "Not found / rejected (4xx)",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "fixed", "fixedColor": "yellow" }, "unit": "short" },
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "yellow"
+          },
+          "unit": "short"
+        },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "instant",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status >= 400 | status < 500 [$__range]))"
         }
@@ -101,25 +177,49 @@
       "id": 4,
       "type": "stat",
       "title": "Slowest 5% of requests",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "auto",
         "justifyMode": "auto"
       },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "fixed", "fixedColor": "text" }, "unit": "s", "decimals": 2 },
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "s",
+          "decimals": 2
+        },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "instant",
-          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__range])"
+          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__range]) by (site)"
         }
       ]
     },
@@ -127,11 +227,26 @@
       "id": 5,
       "type": "timeseries",
       "title": "Requests over time",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "fieldConfig": {
         "defaults": {
@@ -139,44 +254,89 @@
             "drawStyle": "bars",
             "fillOpacity": 60,
             "lineWidth": 1,
-            "stacking": { "mode": "normal", "group": "A" },
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
             "axisSoftMin": 0
           },
           "unit": "short"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "failed (5xx)" },
-            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "failed (5xx)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "rejected (4xx)" },
-            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "rejected (4xx)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "ok" },
-            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "ok"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
           }
         ]
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "ok",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status < 400 [$__auto]))"
         },
         {
           "refId": "B",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "rejected (4xx)",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status >= 400 | status < 500 [$__auto]))"
         },
         {
           "refId": "C",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "failed (5xx)",
           "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | status >= 500 [$__auto]))"
@@ -187,15 +347,35 @@
       "id": 6,
       "type": "timeseries",
       "title": "Response time",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "fieldConfig": {
         "defaults": {
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "axisSoftMin": 0 },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "axisSoftMin": 0
+          },
           "unit": "s",
           "decimals": 2
         },
@@ -204,17 +384,23 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "median",
-          "expr": "quantile_over_time(0.5, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto])"
+          "expr": "quantile_over_time(0.5, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
         },
         {
           "refId": "B",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "legendFormat": "slowest 5%",
-          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto])"
+          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | unwrap duration [$__auto]) by (site)"
         }
       ]
     },
@@ -223,8 +409,16 @@
       "type": "logs",
       "title": "App log",
       "description": "Everything the Next.js service printed — both release slots.",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 12 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -236,7 +430,10 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "maxLines": 500,
           "expr": "{job=\"journal\", unit=~\"nihongo-no-michinori.*\"}"
@@ -248,8 +445,16 @@
       "type": "logs",
       "title": "Errors anywhere on the server",
       "description": "The app, PostgreSQL, nginx, certbot, sshd — anything the journal marked as an error or said \"error\".",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 12 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -261,7 +466,10 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "maxLines": 500,
           "expr": "{job=\"journal\"} |~ \"(?i)(error|fatal|panic|unhandled|refused)\""
@@ -272,18 +480,59 @@
       "id": 9,
       "type": "table",
       "title": "Most requested pages",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 22 },
-      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
-      "fieldConfig": { "defaults": { "custom": { "align": "auto" } }, "overrides": [] },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
       "transformations": [
-        { "id": "organize", "options": { "excludeByName": { "Time": true } } },
-        { "id": "sortBy", "options": { "sort": [{ "field": "Value", "desc": true }] } }
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
+          }
+        }
       ],
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "instant",
           "format": "table",
           "expr": "topk(20, sum by (uri) (count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" [$__range])))"
@@ -294,8 +543,16 @@
       "id": 10,
       "type": "logs",
       "title": "Failed requests (5xx)",
-      "datasource": { "type": "loki", "uid": "michinori-loki" },
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 22 },
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -307,7 +564,10 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
           "queryType": "range",
           "maxLines": 200,
           "expr": "{job=\"nginx\", stream=\"access\"} | json | status >= 500"
