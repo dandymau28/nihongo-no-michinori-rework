@@ -102,6 +102,22 @@
           "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" | anonId != \"\" [$__range])))",
           "legendFormat": "5 · finished the lesson"
         }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "1 · opened a lesson",
+              "Value #B": "2 · started it",
+              "Value #C": "3 · started an exercise",
+              "Value #D": "4 · finished an exercise",
+              "Value #E": "5 · finished the lesson"
+            },
+            "excludeByName": {},
+            "indexByName": {}
+          }
+        }
       ]
     },
     {
@@ -191,6 +207,22 @@
           "queryType": "instant",
           "expr": "count(sum by (userId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" | userId != \"\" [$__range])))",
           "legendFormat": "5 · started a planner"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "1 · opened the site",
+              "Value #B": "2 · started signing up",
+              "Value #C": "3 · account created",
+              "Value #D": "4 · signed in",
+              "Value #E": "5 · started a planner"
+            },
+            "excludeByName": {},
+            "indexByName": {}
+          }
         }
       ]
     },
