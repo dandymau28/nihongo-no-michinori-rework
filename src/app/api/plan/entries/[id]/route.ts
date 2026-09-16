@@ -7,6 +7,7 @@ import {
   readJson,
   unauthorized,
 } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { LONG_TX, loadPlan, relayUnfinishedLessons, toEntry } from "@/lib/server/plan";
 import { entryPatch } from "@/lib/server/schemas";
 
@@ -45,6 +46,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (nextDate == null && (isTask || !nextSkipped)) return badRequest("date required");
 
   const row = await prisma.planEntry.update({ where: { id }, data });
+  logEvent("planner.entry_updated", {
+    userId,
+    lessonId: entry.lessonId,
+    changed: Object.keys(data).join(",") || "nothing",
+  });
   return json(toEntry(row));
 }
 
@@ -69,5 +75,6 @@ export async function DELETE(_req: Request, { params }: Ctx) {
       await relayUnfinishedLessons(tx, userId);
     }, LONG_TX);
   }
+  logEvent("planner.entry_removed", { userId, lessonId: entry.lessonId, task: entry.lessonId == null });
   return json(await loadPlan(userId));
 }

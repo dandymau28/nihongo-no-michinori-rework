@@ -24,6 +24,13 @@ loki.relabel "journal" {
 		target_label  = "unit"
 	}
 
+	// Grafana's Logs Drilldown groups by service_name; without this it shows the
+	// Alloy component's name instead of the service that wrote the line.
+	rule {
+		source_labels = ["__journal__systemd_unit"]
+		target_label  = "service_name"
+	}
+
 	rule {
 		source_labels = ["__journal_priority_keyword"]
 		target_label  = "level"
@@ -44,10 +51,10 @@ loki.source.journal "system" {
 
 local.file_match "nginx" {
 	path_targets = [
-		{__path__ = "/var/log/nginx/michinori.access.json.log", job = "nginx", site = "michinori", stream = "access"},
-		{__path__ = "/var/log/nginx/michinori.error.log", job = "nginx", site = "michinori", stream = "error"},
-		{__path__ = "/var/log/nginx/horus.access.json.log", job = "nginx", site = "horus", stream = "access"},
-		{__path__ = "/var/log/nginx/horus.error.log", job = "nginx", site = "horus", stream = "error"},
+		{__path__ = "/var/log/nginx/michinori.access.json.log", job = "nginx", site = "michinori", stream = "access", service_name = "nginx"},
+		{__path__ = "/var/log/nginx/michinori.error.log", job = "nginx", site = "michinori", stream = "error", service_name = "nginx"},
+		{__path__ = "/var/log/nginx/horus.access.json.log", job = "nginx", site = "horus", stream = "access", service_name = "nginx"},
+		{__path__ = "/var/log/nginx/horus.error.log", job = "nginx", site = "horus", stream = "error", service_name = "nginx"},
 	]
 }
 
@@ -69,5 +76,17 @@ loki.process "nginx" {
 	stage.drop {
 		expression          = "\"uri\":\"/api/health"
 		drop_counter_reason = "health_check"
+	}
+
+	// Grafana's own JS, fonts and icons, and its dashboard websocket. Watching Grafana
+	// load Grafana would be most of the horus traffic and tells you nothing.
+	stage.drop {
+		expression          = "\"uri\":\"/public/"
+		drop_counter_reason = "grafana_asset"
+	}
+
+	stage.drop {
+		expression          = "\"uri\":\"/api/live/"
+		drop_counter_reason = "grafana_live"
 	}
 }

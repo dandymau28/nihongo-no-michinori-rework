@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { logEvent, timer } from "./log";
 
 type Mail = { to: string; subject: string; text: string; html?: string };
 
@@ -32,17 +33,21 @@ function getTransporter(): Transporter | null {
 export async function sendEmail(mail: Mail): Promise<void> {
   const t = getTransporter();
   if (!t) {
+    logEvent("email.skipped", { subject: mail.subject, reason: "no SMTP configured" });
     console.info(
       `\n[email] SMTP not configured — not sent.\nTo: ${mail.to}\nSubject: ${mail.subject}\n\n${mail.text}\n`,
     );
     return;
   }
+  const ms = timer();
   await t.sendMail({
     from: process.env.EMAIL_FROM || process.env.SMTP_USER,
     // The sending domain may have no mailbox — replies go to an inbox someone reads.
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
     ...mail,
   });
+  // The address itself stays out of the logs; the subject says which email it was.
+  logEvent("email.sent", { subject: mail.subject, ms: ms() });
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

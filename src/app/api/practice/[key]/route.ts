@@ -8,6 +8,7 @@ import {
   readJson,
   unauthorized,
 } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { PRACTICE_KEYS, practiceBody } from "@/lib/server/schemas";
 
 type Ctx = { params: Promise<{ key: string }> };
@@ -44,5 +45,6 @@ export async function PUT(req: Request, { params }: Ctx) {
     create: { userId, key, data },
     update: { data },
   });
+  logEvent("practice.save", { userId, trainer: key });
   return json({ ok: true });
 }

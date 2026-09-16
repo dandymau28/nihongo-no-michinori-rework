@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { getLesson, lessonForLegacyDay } from "@/data/lessons";
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { lessonProgress } from "@/lib/server/schemas";
 
 /**
@@ -41,5 +42,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ lesson: 
     );
   }
   await prisma.$transaction(writes);
+  logEvent("progress.save", {
+    userId,
+    lessonId: lesson.id,
+    level: lesson.level,
+    status: body.data.status,
+    exercises: body.data.exercises.length,
+  });
   return json({ ok: true });
 }

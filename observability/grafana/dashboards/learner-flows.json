@@ -1,0 +1,321 @@
+{
+  "uid": "michinori-flows",
+  "title": "Learner flows",
+  "description": "Every step a learner takes through the app: sign-up, confirmation email, planner, lessons, practice. Built from the app's own event log plus the metrics views.",
+  "tags": ["michinori"],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "5m",
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "userId",
+        "type": "textbox",
+        "label": "Learner id",
+        "description": "Paste a user id to follow one learner end to end in the last panel.",
+        "query": "",
+        "current": { "text": "", "value": "" },
+        "options": [],
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "How far learners get",
+      "description": "All time, not the dashboard's time range. Each step counts the people who reached it.",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "michinori-db" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "continuous-BlPu" }, "unit": "short", "min": 0 },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-postgresql-datasource", "uid": "michinori-db" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select signed_up as \"signed up\", confirmed_email as \"confirmed email\", started_planner as \"started a planner\", finished_a_lesson as \"finished a lesson\", finished_five as \"finished 5+ lessons\" from metrics.funnel"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Learners studying each week",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "michinori-db" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "axisSoftMin": 0 },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-postgresql-datasource", "uid": "michinori-db" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select week as time, learners, lessons_touched as \"lessons touched\" from metrics.active_weekly where $__timeFilter(week) order by 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Sign-ups",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\\\"auth.signup\\\"\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Sign-ins",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "text" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\\\"auth.signin\\\"\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Planners started",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\\\"planner.start\\\"\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Lesson progress saved",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\\\"progress.save\\\"\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "What people are doing",
+      "description": "Every app event, grouped by name.",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 12 },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["sum"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "stacking": { "mode": "normal", "group": "A" },
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "range",
+          "legendFormat": "{{evt}}",
+          "expr": "sum by (evt) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | __error__=\"\" [$__auto]))"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Events in this range",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 12 },
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": { "defaults": { "custom": { "align": "auto" } }, "overrides": [] },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true } } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "Value", "desc": true }] } }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "instant",
+          "format": "table",
+          "expr": "sum by (evt) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | __error__=\"\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "logs",
+      "title": "Email flow",
+      "description": "Confirmation and password-reset emails: requested by the app, then accepted by the SMTP provider — or failed.",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 21 },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "range",
+          "maxLines": 300,
+          "expr": "{job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt =~ \"auth.email.*|email.*\""
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "How long the slow calls take",
+      "description": "95th percentile of the `ms` field — planner rebuilds, reorders and email sends.",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 21 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "axisSoftMin": 0 },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "range",
+          "legendFormat": "{{evt}}",
+          "expr": "quantile_over_time(0.95, {job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"ms\\\":\" | json | __error__=\"\" | unwrap ms [$__auto]) by (evt)"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "One learner's journey",
+      "description": "Paste a user id in the \"Learner id\" box at the top. Ids come from the app's own logs, or from the database.",
+      "datasource": { "type": "loki", "uid": "michinori-loki" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 30 },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Ascending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "michinori-loki" },
+          "queryType": "range",
+          "maxLines": 500,
+          "expr": "{job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | userId = \"$userId\""
+        }
+      ]
+    }
+  ]
+}

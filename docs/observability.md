@@ -9,6 +9,16 @@ learning?** (usage). Reached at `https://horus.xerzack.web.id`.
 | Loki (log storage) | `127.0.0.1:3110`, 30-day retention, files in `/var/lib/loki` |
 | Alloy (log shipper) | reads the systemd journal and `/var/log/nginx/*`, pushes to Loki |
 | Usage data | the app's own PostgreSQL, through a read-only role and aggregate views |
+| Host vitals | `host-stats.timer`, one JSON line a minute into the journal |
+
+Four dashboards come with it:
+
+| Dashboard | Answers |
+|---|---|
+| **Site usage** | How many learners, what they study, which lessons stall — from the database |
+| **Learner flows** | Every step through the app: sign-up, confirmation email, planner, lessons, practice — from the app's event log |
+| **Logs & traffic** | Requests, failures, response times, the app log — from nginx and the journal |
+| **Server health** | CPU, memory, swap, disk and memory per service — from `host-stats` |
 
 Nothing here is exposed to the internet except Grafana's own login page. Config files live
 in [`observability/`](../observability) in this repo; this page is the install order.
@@ -24,6 +34,14 @@ memory cap and an `OOMScoreAdjust` that makes the kernel kill *it*, never the we
 | Grafana | ~130 MB | 280 MB |
 | Loki | ~150 MB | 256 MB |
 | Alloy | ~60 MB | 128 MB |
+| host-stats | one second a minute | — |
+
+There is deliberately **no Prometheus**. Resource monitoring normally means a metrics
+database, which would cost another 150 MB of RAM on a box that has ~1 GB free; instead
+`host-stats.sh` logs CPU, memory, swap, disk and per-service memory as one JSON line a
+minute, and the dashboard graphs those numbers out of Loki. The trade-off is a one-minute
+resolution and no PromQL. If the site ever outgrows that, Prometheus can be added without
+changing anything else here.
 
 That's roughly **350 MB in normal use**. Disk: a site this size writes a few MB of logs a
 day, so 30 days stays well under 1 GB of the 21 GB free.
@@ -204,7 +222,35 @@ Expect one JSON object with `"status":200` and a `"duration"`.
 > Logrotate already covers `/var/log/nginx/*.log`, and the new file matches that pattern.
 > Alloy follows the rotation on its own.
 
-## 7. Usage data: read-only views over the app database
+## 7. Host vitals every minute
+
+```bash
+sudo install -m 755 $OBS/bin/host-stats.sh /usr/local/bin/host-stats.sh
+```
+
+```bash
+sudo /usr/local/bin/host-stats.sh
+```
+
+Expect one JSON line: `{"evt":"host","cpu_pct":3.4,…}`. Every field must be a number — a
+blank or `[not set]` means that unit isn't running, which is fine, but tell me if a field
+is missing entirely.
+
+```bash
+sudo install -m 644 $OBS/systemd/host-stats.service /etc/systemd/system/host-stats.service && sudo install -m 644 $OBS/systemd/host-stats.timer /etc/systemd/system/host-stats.timer
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now host-stats.timer
+```
+
+```bash
+sleep 70 && sudo journalctl -u host-stats -n 2 --no-pager
+```
+
+Expect a fresh line, timestamped within the last minute.
+
+## 8. Usage data: read-only views over the app database
 
 Generate a password and create the views and the Grafana role:
 
@@ -237,7 +283,7 @@ sudo -u postgres psql -d nihongo_no_michinori -c 'set role grafana_ro; select * 
 
 Expect `ERROR: permission denied for table user`. That's the correct answer.
 
-## 8. Grafana
+## 9. Grafana
 
 ```bash
 sudo install -m 600 -o root -g root /dev/null /etc/grafana/db.env && echo "GRAFANA_DB_PASSWORD=$GRAFANA_PW" | sudo tee /etc/grafana/db.env > /dev/null
@@ -269,7 +315,7 @@ curl -sS http://127.0.0.1:3001/api/health
 
 Expect `"database": "ok"`.
 
-## 9. Put nginx in front and turn on HTTPS
+## 10. Put nginx in front and turn on HTTPS
 
 ```bash
 sudo install -m 644 $OBS/nginx/horus.conf /etc/nginx/sites-available/horus
@@ -290,7 +336,7 @@ curl -sI https://horus.xerzack.web.id/login | head -1
 Expect `HTTP/2 200`. Grafana only accepts its session cookie over HTTPS, so finish this
 step before logging in.
 
-## 10. First login
+## 11. First login
 
 Open **https://horus.xerzack.web.id** and sign in with `admin` / `admin`. Grafana makes
 you set a new password immediately — use a strong one from your password manager.
@@ -306,10 +352,16 @@ Then open **Dashboards → Nihongo No Michinori**:
 
 - **Site usage** — learners, sign-ups per day, lessons finished, which presets people
   pick, and which lessons they never finish.
+- **Learner flows** — how far learners get (signed up → confirmed → planner → first
+  lesson → five lessons), what they're doing right now, the email flow, and a box to paste
+  a learner id into to follow one person end to end.
 - **Logs & traffic** — requests and failures over time, response times, the app log, and
   every error the server wrote.
+- **Server health** — CPU, memory, swap, disk, and memory per service.
 
-Data appears as it happens: logs from now on, usage from all of history.
+Data appears as it happens: usage from all of history, logs from the moment Alloy started,
+flows from the first deploy that includes the app's event logging, vitals from the minute
+`host-stats.timer` was enabled.
 
 ---
 
@@ -327,8 +379,30 @@ The log search is in **Explore → Logs**. Useful queries:
 | Did the deploy restart cleanly? | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "Ready"` |
 | Database complaints | `{job="journal", unit="postgresql@16-main.service"}` |
 
-Sign-ups and sign-ins are in **Site usage**; a single learner's activity is deliberately
-not visible anywhere.
+### The app's own events
+
+The app writes one JSON line per meaningful action (`src/lib/server/log.ts`). They're in
+the journal alongside everything else, so the same search finds them:
+
+| Question | Query |
+|---|---|
+| Everything one learner did | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| userId="<id>"` |
+| Did their confirmation email go out? | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt=~"auth.email.*\|email.*"` |
+| Planners started today | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt="planner.start"` |
+| Lessons being finished | `{job="journal", unit=~"nihongo-no-michinori.*"} \| json \| evt="progress.save" \| status="done"` |
+| Slow planner rebuilds | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "\"ms\":" \| json \| ms > 500` |
+
+The events are `auth.signup`, `auth.signin`, `auth.email_requested`, `auth.email_failed`,
+`email.sent`, `email.skipped`, `planner.start`, `planner.settings`,
+`planner.lessons_added`, `planner.reorder`, `planner.task_added`,
+`planner.entry_updated`, `planner.entry_removed`, `planner.shift`, `progress.save`,
+`progress.import`, `progress.reset` and `practice.save`.
+
+Each line carries the learner's `userId` — a random id, never an email or a name, but
+enough to follow one person's activity. The **Site usage** dashboard stays aggregate-only;
+these logs are the place where individual activity is visible, by design, so that a
+learner reporting "I never got the email" can be answered. To stop that, hash the id in
+`logEvent` — every caller goes through that one function.
 
 ### Email alerts (optional)
 
@@ -355,6 +429,28 @@ Then in Grafana: **Alerting → Contact points** (add your email, "Test" it), th
 
 1. **Site failing** — query `sum(count_over_time({job="nginx", stream="access"} | json | status >= 500 [5m]))`, fire when above 5 for 5 minutes.
 2. **App restarting in a loop** — query `sum(count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |= "Started" [15m]))`, fire when above 4.
+
+## Picking up changes from this repo
+
+When `observability/` changes, deploy first so `current/observability` is up to date, then
+apply only the parts that changed:
+
+```bash
+bash /var/www/nihongo-no-michinori/deploy.sh && export OBS=/var/www/nihongo-no-michinori/current/observability
+```
+
+| Changed | Apply it with |
+|---|---|
+| Dashboards | `sudo install -o grafana -g grafana -m 644 $OBS/grafana/dashboards/*.json /var/lib/grafana/dashboards/` (picked up within a minute) |
+| Views (`metrics-views.sql`) | `sudo -u postgres psql -d nihongo_no_michinori -v grafana_pw=<existing password> -f $OBS/sql/metrics-views.sql` |
+| Alloy config | `sudo install -m 644 $OBS/alloy/config.alloy /etc/alloy/config.alloy && sudo systemctl restart alloy` |
+| Loki config | `sudo install -m 644 $OBS/loki/config.yml /etc/loki/config.yml && sudo systemctl restart loki` |
+| `host-stats.sh` | `sudo install -m 755 $OBS/bin/host-stats.sh /usr/local/bin/host-stats.sh` |
+| App event logging | nothing — it ships with the deploy |
+
+Re-running the SQL is safe: it replaces the views and leaves the role and its password
+alone. The `grafana_pw` value only matters the first time; pass the existing one so the
+`alter role` line is a no-op.
 
 ## Maintenance
 

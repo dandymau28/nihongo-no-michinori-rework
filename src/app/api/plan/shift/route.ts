@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { doneLessonIds, loadPlan } from "@/lib/server/plan";
 import { shiftBody } from "@/lib/server/schemas";
 import { shiftStudyDays } from "@/lib/schedule";
@@ -34,5 +35,6 @@ export async function POST(req: Request) {
       ),
     );
   }
+  logEvent("planner.shift", { userId, entries: moves.length, by });
   return json(await loadPlan(userId));
 }

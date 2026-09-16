@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent, timer } from "@/lib/server/log";
 import { LONG_TX, loadPlan, relayUnfinishedLessons } from "@/lib/server/plan";
 import { reorderBody } from "@/lib/server/schemas";
 
@@ -10,6 +11,7 @@ import { reorderBody } from "@/lib/server/schemas";
 export async function POST(req: Request) {
   const userId = await currentUserId();
   if (!userId) return unauthorized();
+  const ms = timer();
   const parsed = reorderBody.safeParse(await readJson(req));
   if (!parsed.success) return badRequest("invalid order");
   const ids = parsed.data.entryIds;
@@ -32,5 +34,6 @@ export async function POST(req: Request) {
     await relayUnfinishedLessons(tx, userId);
   }, LONG_TX);
 
+  logEvent("planner.reorder", { userId, lessons: ids.length, ms: ms() });
   return json(await loadPlan(userId));
 }

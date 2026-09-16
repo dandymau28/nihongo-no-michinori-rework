@@ -9,6 +9,7 @@ import {
   readJson,
   unauthorized,
 } from "@/lib/server/http";
+import { logEvent, timer } from "@/lib/server/log";
 import { LONG_TX, lessonEntry, loadPlan } from "@/lib/server/plan";
 import { newPlanner, plannerSettings } from "@/lib/server/schemas";
 import { buildSchedule } from "@/lib/schedule";
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
   const parsed = newPlanner.safeParse(await readJson(req));
   if (!parsed.success) return badRequest("invalid planner");
 
+  const ms = timer();
   const { source, startDate, studyDays, perDay, replace } = parsed.data;
   // One planner per learner, so replacing it must be deliberate — e.g. a tab that still
   // shows "no planner" after one was started elsewhere. (`replace` omitted = a page from
@@ -55,6 +57,13 @@ export async function POST(req: Request) {
       data: lessonIds.map((id, i) => lessonEntry(userId, id, i, dates.get(id)!)),
     }),
   ]);
+  logEvent("planner.start", {
+    userId,
+    preset: presetId ?? "custom",
+    lessons: lessonIds.length,
+    replaced: replace === true,
+    ms: ms(),
+  });
   return json(await loadPlan(userId), 201);
 }
 
@@ -96,5 +105,6 @@ export async function PUT(req: Request) {
     }
   }, LONG_TX);
 
+  logEvent("planner.settings", { userId, rebuild, perDay: schedule.perDay });
   return json(await loadPlan(userId));
 }

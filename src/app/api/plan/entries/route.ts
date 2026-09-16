@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { toEntry } from "@/lib/server/plan";
 import { newTask } from "@/lib/server/schemas";
 
@@ -18,5 +19,6 @@ export async function POST(req: Request) {
       date: parsed.data.date,
     },
   });
+  logEvent("planner.task_added", { userId });
   return json(toEntry(row), 201);
 }

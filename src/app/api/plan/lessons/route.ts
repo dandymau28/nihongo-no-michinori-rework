@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { LONG_TX, lessonEntry, loadPlan } from "@/lib/server/plan";
 import { addLessons } from "@/lib/server/schemas";
 import { buildSchedule, shiftStudyDays } from "@/lib/schedule";
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   const settings = await prisma.planSettings.findUnique({ where: { userId } });
   if (!settings) return badRequest("start a planner first");
 
+  let added = 0;
   await prisma.$transaction(async (tx) => {
     const existing = await tx.planEntry.findMany({
       where: { userId, lessonId: { not: null } },
@@ -40,7 +42,9 @@ export async function POST(req: Request) {
     await tx.planEntry.createMany({
       data: toAdd.map((id, i) => lessonEntry(userId, id, nextPosition + i, dates.get(id)!)),
     });
+    added = toAdd.length;
   }, LONG_TX);
 
+  logEvent("planner.lessons_added", { userId, lessons: added, asked: parsed.data.lessonIds.length });
   return json(await loadPlan(userId));
 }

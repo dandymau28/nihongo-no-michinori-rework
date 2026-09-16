@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { getLesson, lessonForLegacyDay } from "@/data/lessons";
 import { prisma } from "@/lib/server/db";
 import { badRequest, currentUserId, json, readJson, unauthorized } from "@/lib/server/http";
+import { logEvent } from "@/lib/server/log";
 import { progressImport } from "@/lib/server/schemas";
 import type { ExerciseResult, ProgressMap, Status } from "@/lib/types";
 
@@ -60,6 +61,11 @@ export async function POST(req: Request) {
     prisma.lessonProgress.createMany({ data: lessonRows }),
     prisma.dayProgress.createMany({ data: legacyRows }),
   ]);
+  logEvent("progress.import", {
+    userId,
+    lessons: lessonRows.length,
+    skipped: Object.keys(parsed.data.progress).length - lessonRows.length,
+  });
   return json({ progress: await loadProgress(userId) });
 }
 
@@ -70,5 +76,6 @@ export async function DELETE() {
     prisma.lessonProgress.deleteMany({ where: { userId } }),
     prisma.dayProgress.deleteMany({ where: { userId } }),
   ]);
+  logEvent("progress.reset", { userId });
   return json({ ok: true });
 }

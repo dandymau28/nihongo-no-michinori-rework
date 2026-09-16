@@ -125,7 +125,8 @@ src/
     PlanContext.tsx        the learner's planner
   lib/
     schedule.ts            pure date maths: study days, shifting, laying out lessons
-    server/                prisma client, auth, zod schemas, planner helpers
+    server/                prisma client, auth, zod schemas, planner helpers,
+                           log.ts (one JSON event line per action, read by Grafana)
   components/
     lessons/               LessonLibrary, LessonDetail
     planner/               PlannerView (calendar), PlannerOrder, PlannerStart,

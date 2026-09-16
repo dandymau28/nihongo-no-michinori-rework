@@ -1,0 +1,11 @@
+# Install to /etc/systemd/system/host-stats.service
+# Prints one JSON line of host vitals; systemd captures stdout into the journal, where
+# Alloy picks it up. Driven by host-stats.timer, not enabled on its own.
+[Unit]
+Description=Log host vitals as one JSON line
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/host-stats.sh
+# Reads /proc and asks systemd for per-unit memory; no privileges needed beyond that.
+Nice=10

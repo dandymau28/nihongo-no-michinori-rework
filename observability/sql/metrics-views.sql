@@ -115,6 +115,28 @@ left join lesson_progress p
 where e.lesson_id is not null
 group by 1;
 
+-- How far learners get: each step counts the people who reached it.
+create or replace view metrics.funnel as
+with done as (
+  select user_id, count(*) as finished from lesson_progress where status = 'done' group by 1
+)
+select
+  (select count(*) from "user")::int                      as signed_up,
+  (select count(*) from "user" where email_verified)::int  as confirmed_email,
+  (select count(*) from plan_settings)::int                as started_planner,
+  (select count(*) from done)::int                         as finished_a_lesson,
+  (select count(*) from done where finished >= 5)::int     as finished_five;
+
+-- Learners studying each week — the closest thing to retention without tracking people.
+create or replace view metrics.active_weekly as
+select
+  date_trunc('week', updated_at at time zone 'UTC' at time zone 'Asia/Jakarta')
+    at time zone 'Asia/Jakarta'   as week,
+  count(distinct user_id)::int    as learners,
+  count(*)::int                   as lessons_touched
+from lesson_progress
+group by 1;
+
 -- Practice trainers: how many learners use each one, and when it was last used.
 create or replace view metrics.practice_usage as
 select

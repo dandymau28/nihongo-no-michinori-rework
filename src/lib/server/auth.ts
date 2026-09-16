@@ -5,14 +5,22 @@ import { prisma } from "./db";
 import { linkEmail, sendEmail } from "./email";
 import { emailLinksEnabled } from "./emailFeatures";
 import { googleEnabled } from "./google";
+import { logEvent } from "./log";
 
 const DAY = 60 * 60 * 24;
 
 /** Not awaited, so response times don't reveal whether an account exists. */
-function deliver(to: string, subject: string, body: { text: string; html: string }) {
-  void sendEmail({ to, subject, ...body }).catch((err) =>
-    console.error(`[email] "${subject}" failed:`, err),
-  );
+function deliver(
+  kind: "verify" | "reset",
+  user: { id: string; email: string },
+  subject: string,
+  body: { text: string; html: string },
+) {
+  logEvent("auth.email_requested", { userId: user.id, kind });
+  void sendEmail({ to: user.email, subject, ...body }).catch((err) => {
+    logEvent("auth.email_failed", { userId: user.id, kind, error: String(err) });
+    console.error(`[email] "${subject}" failed:`, err);
+  });
 }
 
 export const auth = betterAuth({
@@ -33,7 +41,8 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       deliver(
-        user.email,
+        "reset",
+        user,
         "Reset your Nihongo No Michinori password",
         linkEmail({
           name: user.name,
@@ -51,7 +60,8 @@ export const auth = betterAuth({
     expiresIn: DAY,
     sendVerificationEmail: async ({ user, url }) => {
       deliver(
-        user.email,
+        "verify",
+        user,
         "Confirm your email for Nihongo No Michinori",
         linkEmail({
           name: user.name,
@@ -75,6 +85,23 @@ export const auth = betterAuth({
   account: {
     // Signing in with Google using the same email joins the existing account.
     accountLinking: { enabled: true, trustedProviders: ["google"] },
+  },
+  // One log line per account created and per sign-in, for the "Learner flows" dashboard.
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          logEvent("auth.signup", { userId: user.id, confirmed: user.emailVerified });
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          logEvent("auth.signin", { userId: session.userId });
+        },
+      },
+    },
   },
   plugins: [nextCookies()],
 });
