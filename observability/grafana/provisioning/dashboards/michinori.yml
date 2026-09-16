@@ -1,0 +1,16 @@
+# Install to /etc/grafana/provisioning/dashboards/michinori.yml
+# Loads the dashboard JSON from /var/lib/grafana/dashboards (copy them there).
+apiVersion: 1
+
+providers:
+  - name: Nihongo No Michinori
+    orgId: 1
+    folder: Nihongo No Michinori
+    type: file
+    disableDeletion: false
+    # Edits made in the UI stick until the file changes on disk.
+    allowUiUpdates: true
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

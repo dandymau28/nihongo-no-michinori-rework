@@ -80,6 +80,11 @@ The app runs as a Node server behind nginx with PostgreSQL. See
 [`docs/deploy.md`](docs/deploy.md) for the full VPS setup (systemd, nginx, Certbot,
 Google OAuth, backups).
 
+**Logs and usage** are in Grafana at `horus.xerzack.web.id`: Loki holds the server's logs
+(app, nginx, PostgreSQL), and read-only aggregate views over the app database answer how
+many people are learning. See [`docs/observability.md`](docs/observability.md); the configs
+are in [`observability/`](observability).
+
 Updates deploy with **zero downtime** (blue/green on one server): `deploy.sh` builds each
 release in its own folder, starts it on a second port, checks `/api/health`, switches nginx
 and then stops the old release. `rollback.sh` and `restart.sh` do the same swap without a
@@ -125,6 +130,8 @@ src/
     lessons/               LessonLibrary, LessonDetail
     planner/               PlannerView (calendar), PlannerOrder, PlannerStart,
                            LessonPickerModal, EntryRow, PlanSettingsForm, …
+scripts/                   deploy.sh, rollback.sh, restart.sh, setup-zero-downtime.sh
+observability/             Grafana dashboards, Loki/Alloy configs, the metrics views
 ```
 
 A lesson's `id` is permanent: progress and planners are stored against it. A planner is a

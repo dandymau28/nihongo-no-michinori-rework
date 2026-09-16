@@ -1,0 +1,37 @@
+# Install to /etc/grafana/provisioning/datasources/michinori.yml
+# The database password comes from GRAFANA_DB_PASSWORD in /etc/grafana/db.env (root-only,
+# never in git). Provisioned datasources are recreated on every Grafana restart.
+apiVersion: 1
+
+datasources:
+  - name: Logs
+    uid: michinori-loki
+    type: loki
+    access: proxy
+    url: http://127.0.0.1:3110
+    isDefault: true
+    editable: false
+    jsonData:
+      maxLines: 1000
+      timeout: 60
+
+  - name: Michinori DB
+    uid: michinori-db
+    # Older Grafana calls this type "postgres" — change it if provisioning complains.
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: 127.0.0.1:5432
+    user: grafana_ro
+    database: nihongo_no_michinori
+    editable: false
+    jsonData:
+      database: nihongo_no_michinori
+      sslmode: disable
+      postgresVersion: 1600
+      # The app needs the connections more than the dashboards do.
+      maxOpenConns: 3
+      maxIdleConns: 1
+      connMaxLifetime: 14400
+      timescaledb: false
+    secureJsonData:
+      password: ${GRAFANA_DB_PASSWORD}

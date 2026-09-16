@@ -1,0 +1,388 @@
+# Logs and usage: Grafana, Loki and Alloy
+
+One place to answer both questions: **what did the server do?** (logs) and **is anyone
+learning?** (usage). Reached at `https://horus.xerzack.web.id`.
+
+| | |
+|---|---|
+| Grafana | `127.0.0.1:3001`, public only through nginx at `horus.xerzack.web.id` |
+| Loki (log storage) | `127.0.0.1:3110`, 30-day retention, files in `/var/lib/loki` |
+| Alloy (log shipper) | reads the systemd journal and `/var/log/nginx/*`, pushes to Loki |
+| Usage data | the app's own PostgreSQL, through a read-only role and aggregate views |
+
+Nothing here is exposed to the internet except Grafana's own login page. Config files live
+in [`observability/`](../observability) in this repo; this page is the install order.
+
+## What it costs
+
+The VPS has **1.9 GB of RAM**, already shared by the app, PostgreSQL and nginx — and a
+deploy adds a Next.js build, which alone wants about 1 GB. So each service gets a hard
+memory cap and an `OOMScoreAdjust` that makes the kernel kill *it*, never the website:
+
+| | Typical | Hard cap |
+|---|---|---|
+| Grafana | ~130 MB | 280 MB |
+| Loki | ~150 MB | 256 MB |
+| Alloy | ~60 MB | 128 MB |
+
+That's roughly **350 MB in normal use**. Disk: a site this size writes a few MB of logs a
+day, so 30 days stays well under 1 GB of the 21 GB free.
+
+**Before installing, make sure swap exists** — it's the safety net when a deploy build and
+these services want memory at the same time:
+
+```bash
+swapon --show
+```
+
+If that prints nothing, add 2 GB (same command as `docs/deploy.md` step 3):
+
+```bash
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+---
+
+## 1. Point the subdomain at the VPS
+
+```bash
+dig +short horus.xerzack.web.id
+```
+
+Expect `43.133.34.206`. If it prints nothing, add an **A** record `horus` →
+`43.133.34.206` in CloudHost DNS, then wait a few minutes and try again.
+
+## 2. Get the config files onto the server
+
+They ship with the app, so deploy this commit first:
+
+```bash
+bash /var/www/nihongo-no-michinori/deploy.sh
+```
+
+```bash
+export OBS=/var/www/nihongo-no-michinori/current/observability && ls $OBS
+```
+
+Expect `alloy  grafana  loki  nginx  sql  systemd`. Every command below uses `$OBS`, so
+keep this shell open (or re-run the `export` after reconnecting).
+
+## 3. Install Grafana, Loki and Alloy
+
+```bash
+sudo apt install -y apt-transport-https software-properties-common wget
+```
+
+```bash
+sudo mkdir -p /etc/apt/keyrings && wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+```
+
+```bash
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+```
+
+```bash
+sudo apt update && apt-cache policy grafana loki alloy | grep -E 'grafana:|loki:|alloy:|Candidate'
+```
+
+Expect a **Candidate** version for all three. (If `loki` or `alloy` has none, your Ubuntu
+is older than the repo expects — tell me and we'll switch those two to release binaries.)
+
+```bash
+sudo apt install -y grafana loki alloy
+```
+
+The packages create the `grafana`, `loki` and `alloy` users and their services, all
+disabled until we configure them.
+
+## 4. Loki: store the logs
+
+```bash
+sudo install -o loki -g loki -m 644 $OBS/loki/config.yml /etc/loki/config.yml
+```
+
+```bash
+sudo mkdir -p /var/lib/loki/{chunks,rules,wal,compactor} && sudo chown -R loki:loki /var/lib/loki
+```
+
+```bash
+sudo mkdir -p /etc/systemd/system/loki.service.d && sudo install -m 644 $OBS/systemd/loki-override.conf /etc/systemd/system/loki.service.d/override.conf
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now loki
+```
+
+```bash
+curl -s http://127.0.0.1:3110/ready
+```
+
+Expect `ready`. (For the first 15 seconds it says it's still starting — wait and retry.)
+
+## 5. Alloy: ship the logs
+
+Alloy needs to read the journal and nginx's log files:
+
+```bash
+sudo usermod -a -G systemd-journal,adm alloy
+```
+
+```bash
+sudo install -m 644 $OBS/alloy/config.alloy /etc/alloy/config.alloy
+```
+
+```bash
+sudo mkdir -p /etc/systemd/system/alloy.service.d && sudo install -m 644 $OBS/systemd/alloy-override.conf /etc/systemd/system/alloy.service.d/override.conf
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now alloy
+```
+
+```bash
+curl -s "http://127.0.0.1:3110/loki/api/v1/labels"
+```
+
+Expect JSON listing labels including `job` and `unit` — logs are arriving. (nginx's own
+labels appear after step 6.)
+
+## 6. nginx: log requests as JSON
+
+```bash
+sudo install -m 644 $OBS/nginx/log-json.conf /etc/nginx/conf.d/log-json.conf
+```
+
+Now tell the site to use it. Open the vhost:
+
+```bash
+sudo nano /etc/nginx/sites-available/nihongo-no-michinori
+```
+
+In the `server { ... }` block that listens on **443** (the one Certbot edited), add this
+line just under `server_name`:
+
+```nginx
+    access_log /var/log/nginx/michinori.access.json.log json_access;
+```
+
+Save with Ctrl+O, Enter, Ctrl+X, then:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+```bash
+curl -s https://nihongo-no-michinori.xerzack.web.id/about > /dev/null && sudo tail -1 /var/log/nginx/michinori.access.json.log
+```
+
+Expect one JSON object with `"status":200` and a `"duration"`.
+
+> Logrotate already covers `/var/log/nginx/*.log`, and the new file matches that pattern.
+> Alloy follows the rotation on its own.
+
+## 7. Usage data: read-only views over the app database
+
+Generate a password and create the views and the Grafana role:
+
+```bash
+GRAFANA_PW=$(openssl rand -hex 24) && echo "$GRAFANA_PW"
+```
+
+Copy that value — you need it in the next step.
+
+```bash
+sudo -u postgres psql -d nihongo_no_michinori -v grafana_pw="$GRAFANA_PW" -f $OBS/sql/metrics-views.sql
+```
+
+Expect a list of `CREATE VIEW` / `GRANT` lines and no errors.
+
+```bash
+sudo -u postgres psql -d nihongo_no_michinori -c "select * from metrics.totals"
+```
+
+Expect one row of numbers — your real learner counts.
+
+**What Grafana can and can't see:** the `grafana_ro` role has SELECT on the `metrics`
+schema only. Every view there is an aggregate, so no email addresses, names, password
+hashes, session tokens or learner notes are reachable from a dashboard — even if someone
+gets into Grafana. Verify it yourself:
+
+```bash
+sudo -u postgres psql -d nihongo_no_michinori -c 'set role grafana_ro; select * from "user" limit 1'
+```
+
+Expect `ERROR: permission denied for table user`. That's the correct answer.
+
+## 8. Grafana
+
+```bash
+sudo install -m 600 -o root -g root /dev/null /etc/grafana/db.env && echo "GRAFANA_DB_PASSWORD=$GRAFANA_PW" | sudo tee /etc/grafana/db.env > /dev/null
+```
+
+```bash
+sudo mkdir -p /etc/systemd/system/grafana-server.service.d && sudo install -m 644 $OBS/systemd/grafana-server-override.conf /etc/systemd/system/grafana-server.service.d/override.conf
+```
+
+```bash
+sudo install -m 644 $OBS/grafana/provisioning/datasources/michinori.yml /etc/grafana/provisioning/datasources/michinori.yml
+```
+
+```bash
+sudo install -m 644 $OBS/grafana/provisioning/dashboards/michinori.yml /etc/grafana/provisioning/dashboards/michinori.yml
+```
+
+```bash
+sudo mkdir -p /var/lib/grafana/dashboards && sudo install -o grafana -g grafana -m 644 $OBS/grafana/dashboards/*.json /var/lib/grafana/dashboards/
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now grafana-server
+```
+
+```bash
+curl -s http://127.0.0.1:3001/api/health
+```
+
+Expect `"database": "ok"`.
+
+## 9. Put nginx in front and turn on HTTPS
+
+```bash
+sudo install -m 644 $OBS/nginx/horus.conf /etc/nginx/sites-available/horus
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/horus /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx
+```
+
+```bash
+sudo certbot --nginx -d horus.xerzack.web.id --redirect
+```
+
+```bash
+curl -sI https://horus.xerzack.web.id/login | head -1
+```
+
+Expect `HTTP/2 200`. Grafana only accepts its session cookie over HTTPS, so finish this
+step before logging in.
+
+## 10. First login
+
+Open **https://horus.xerzack.web.id** and sign in with `admin` / `admin`. Grafana makes
+you set a new password immediately — use a strong one from your password manager.
+
+Sign-ups and anonymous access are off, so this account is the only way in. If you ever
+lock yourself out:
+
+```bash
+sudo grafana-cli admin reset-admin-password --homepath /usr/share/grafana <new-password>
+```
+
+Then open **Dashboards → Nihongo No Michinori**:
+
+- **Site usage** — learners, sign-ups per day, lessons finished, which presets people
+  pick, and which lessons they never finish.
+- **Logs & traffic** — requests and failures over time, response times, the app log, and
+  every error the server wrote.
+
+Data appears as it happens: logs from now on, usage from all of history.
+
+---
+
+## Using it day to day
+
+The log search is in **Explore → Logs**. Useful queries:
+
+| Question | Query |
+|---|---|
+| What did the app print? | `{job="journal", unit=~"nihongo-no-michinori.*"}` |
+| Any errors right now? | `{job="journal"} \|~ "(?i)(error\|fatal\|unhandled)"` |
+| What broke for visitors? | `{job="nginx", stream="access"} \| json \| status >= 500` |
+| Who is hammering the site? | `topk(10, sum by (ip) (count_over_time({job="nginx", stream="access"} \| json [1h])))` |
+| Bot probes (the `/wp-admin` kind) | `{job="nginx", stream="access"} \| json \| status = 404` |
+| Did the deploy restart cleanly? | `{job="journal", unit=~"nihongo-no-michinori.*"} \|= "Ready"` |
+| Database complaints | `{job="journal", unit="postgresql@16-main.service"}` |
+
+Sign-ups and sign-ins are in **Site usage**; a single learner's activity is deliberately
+not visible anywhere.
+
+### Email alerts (optional)
+
+Grafana can email you when something breaks, through the same Resend SMTP the app uses.
+Add the credentials to the root-only env file (the password is not in git):
+
+```bash
+sudo tee -a /etc/grafana/db.env > /dev/null <<'EOF'
+GF_SMTP_ENABLED=true
+GF_SMTP_HOST=smtp.resend.com:465
+GF_SMTP_USER=resend
+GF_SMTP_PASSWORD=<your Resend API key>
+GF_SMTP_FROM_ADDRESS=support@xerzack.web.id
+GF_SMTP_FROM_NAME=Horus
+EOF
+```
+
+```bash
+sudo systemctl restart grafana-server
+```
+
+Then in Grafana: **Alerting → Contact points** (add your email, "Test" it), then
+**Alerting → Alert rules → New alert rule**. Two worth having:
+
+1. **Site failing** — query `sum(count_over_time({job="nginx", stream="access"} | json | status >= 500 [5m]))`, fire when above 5 for 5 minutes.
+2. **App restarting in a loop** — query `sum(count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |= "Started" [15m]))`, fire when above 4.
+
+## Maintenance
+
+```bash
+du -sh /var/lib/loki
+```
+
+Check every few months. If it grows past a couple of GB, lower `retention_period` in
+`/etc/loki/config.yml` and restart Loki.
+
+```bash
+systemd-cgtop -1 --order=memory | head -15
+```
+
+Shows what's actually using memory. The three services should sit near the "typical"
+column above.
+
+```bash
+sudo apt update && sudo apt upgrade
+```
+
+Upgrades Grafana, Loki and Alloy with everything else. Dashboards and datasources are
+re-provisioned from the files on every restart, so upgrades can't lose them.
+
+**Changing a dashboard:** edit it in the UI to experiment; to keep the change, export it
+(**Dashboard settings → JSON Model**), save it over the file in `observability/grafana/dashboards/`
+in this repo, commit, and after the next deploy copy it to `/var/lib/grafana/dashboards/`.
+Otherwise a Grafana restart brings back the file's version.
+
+## If something's wrong
+
+| Symptom | Check | Usual cause |
+|---|---|---|
+| Grafana won't load | `sudo journalctl -u grafana-server -n 50` | Port 3001 taken, or a bad provisioning file |
+| "Datasource not found" on a panel | `sudo journalctl -u grafana-server \| grep -i provision` | The datasource type name — try `type: postgres` in `michinori.yml` |
+| Usage panels error, logs fine | `sudo -u postgres psql -d nihongo_no_michinori -c 'select 1 from metrics.totals'` | Views missing, or the password in `/etc/grafana/db.env` doesn't match the role |
+| No logs at all | `sudo journalctl -u alloy -n 50` | Alloy not in `systemd-journal`/`adm` groups (re-run step 5, then restart alloy) |
+| nginx logs missing, journal fine | `sudo tail /var/log/nginx/michinori.access.json.log` | The `access_log` line isn't in the 443 block, or nginx wasn't reloaded |
+| Everything restarts constantly | `systemctl status loki grafana-server` | Hit `MemoryMax`; raise the cap in the drop-in, or lower Loki's retention |
+| A deploy fails on memory | `free -h` | No swap, or these services plus the build don't fit — `sudo systemctl stop loki grafana-server`, deploy, start them again |
+
+Deploys and these services are independent: `deploy.sh` never touches them, and restarting
+them never touches the site.
+
+## Removing it
+
+```bash
+sudo systemctl disable --now grafana-server loki alloy && sudo apt purge -y grafana loki alloy && sudo rm -rf /var/lib/loki /etc/nginx/sites-enabled/horus
+```
+
+Then drop the database role and views:
+
+```bash
+sudo -u postgres psql -d nihongo_no_michinori -c 'drop schema metrics cascade; drop role grafana_ro'
+```

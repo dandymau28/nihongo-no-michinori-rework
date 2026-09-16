@@ -1,0 +1,73 @@
+// Grafana Alloy — reads the systemd journal and nginx's logs, pushes them to Loki.
+// Install to /etc/alloy/config.alloy. The alloy user needs the systemd-journal group
+// (journal) and the adm group (/var/log/nginx).
+
+loki.write "local" {
+	endpoint {
+		url = "http://127.0.0.1:3110/loki/api/v1/push"
+	}
+
+	external_labels = {
+		host = constants.hostname,
+	}
+}
+
+// --- systemd journal ------------------------------------------------------
+// Everything the server logs: the app (nihongo-no-michinori@3101/3102), PostgreSQL,
+// nginx's own service, certbot, sshd. `unit` is the label to filter on in Grafana.
+
+loki.relabel "journal" {
+	forward_to = []
+
+	rule {
+		source_labels = ["__journal__systemd_unit"]
+		target_label  = "unit"
+	}
+
+	rule {
+		source_labels = ["__journal_priority_keyword"]
+		target_label  = "level"
+	}
+}
+
+loki.source.journal "system" {
+	forward_to    = [loki.write.local.receiver]
+	relabel_rules = loki.relabel.journal.rules
+	labels        = {job = "journal"}
+	// On a restart, don't re-read days of history into Loki.
+	max_age = "12h"
+}
+
+// --- nginx ----------------------------------------------------------------
+// The access logs are JSON (see observability/nginx/log-json.conf), so Grafana can
+// filter on status, uri and duration with `| json`.
+
+local.file_match "nginx" {
+	path_targets = [
+		{__path__ = "/var/log/nginx/michinori.access.json.log", job = "nginx", site = "michinori", stream = "access"},
+		{__path__ = "/var/log/nginx/michinori.error.log", job = "nginx", site = "michinori", stream = "error"},
+		{__path__ = "/var/log/nginx/horus.access.json.log", job = "nginx", site = "horus", stream = "access"},
+		{__path__ = "/var/log/nginx/horus.error.log", job = "nginx", site = "horus", stream = "error"},
+	]
+}
+
+loki.source.file "nginx" {
+	targets    = local.file_match.nginx.targets
+	forward_to = [loki.process.nginx.receiver]
+}
+
+loki.process "nginx" {
+	forward_to = [loki.write.local.receiver]
+
+	// Static assets would be most of the volume and answer no question worth asking.
+	stage.drop {
+		expression          = "\"uri\":\"/_next/static"
+		drop_counter_reason = "static_asset"
+	}
+
+	// The deploy script and any uptime monitor poll this every few seconds.
+	stage.drop {
+		expression          = "\"uri\":\"/api/health"
+		drop_counter_reason = "health_check"
+	}
+}
