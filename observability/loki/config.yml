@@ -44,6 +44,9 @@ limits_config:
   reject_old_samples: true
   reject_old_samples_max_age: 168h
   volume_enabled: true
+  # Allows targeted deletes through /loki/api/v1/delete — e.g. dropping streams that were
+  # shipped under a label you've since changed, without waiting for retention.
+  deletion_mode: filter-and-delete
 
 compactor:
   working_directory: /var/lib/loki/compactor
@@ -52,6 +55,9 @@ compactor:
   delete_request_store: filesystem
   compaction_interval: 10m
   retention_delete_delay: 1h
+  # A delete request normally sits cancellable for 24h before anything happens; 10 minutes
+  # is plenty of second-guessing time for one person's server.
+  delete_request_cancel_period: 10m
 
 ingester:
   # Bigger, rarer chunks: less memory and fewer files than the defaults.

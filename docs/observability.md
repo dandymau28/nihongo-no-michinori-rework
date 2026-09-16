@@ -401,6 +401,36 @@ Lines shipped **before** this relabelling kept the label they had, so history fr
 under the old per-slot names. The dashboards query `unit=~"nihongo-no-michinori.*"`, which
 matches both old and new lines, so they show the full history either way.
 
+**Is the relabel live?** Ask Loki which service names it has seen in the last ten minutes:
+
+```bash
+curl -sS -G 'http://127.0.0.1:3110/loki/api/v1/label/service_name/values' --data-urlencode "start=$(date -d '10 minutes ago' +%s)000000000" --data-urlencode "end=$(date +%s)000000000"
+```
+
+Expect `nihongo-no-michinori` and no `@3101`/`@3102` names. If the old names are still
+there for the last ten minutes, Alloy is running the old config — reinstall it and
+restart (see the table above).
+
+**Clearing the old names from the pickers.** Grafana's service list shows every value in
+the selected time range, so old per-slot names keep appearing until the range no longer
+covers them — at the latest when retention expires them. To drop them sooner, ask Loki to
+delete those streams:
+
+```bash
+curl -sS -X POST -G 'http://127.0.0.1:3110/loki/api/v1/delete' --data-urlencode 'query={service_name=~"nihongo-no-michinori@.*"}' --data-urlencode "start=$(date -d '30 days ago' +%s)" --data-urlencode "end=$(date -d '5 minutes ago' +%s)"
+```
+
+The request is cancellable for 10 minutes (`delete_request_cancel_period`), then the
+compactor applies it within the next compaction cycle. List or cancel pending requests:
+
+```bash
+curl -sS 'http://127.0.0.1:3110/loki/api/v1/delete'
+```
+
+That deletes the *log lines*, not just the label — the app's own history from before the
+change goes with them. On a fresh install that's a fair trade for a clean picker; later
+on, prefer just narrowing the time range.
+
 ### The app's own events
 
 The app writes one JSON line per meaningful action (`src/lib/server/log.ts`). They're in
