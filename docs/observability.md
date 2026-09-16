@@ -421,12 +421,32 @@ of real pages.
 
 ### Turn them on
 
-Alerts show up in Grafana's **Alerting → Alert rules** with no setup, but to *reach* you
-they need SMTP and an address. Both live in the root-only env file, never in git:
+Only the rules are provisioned. **Contact points and notification policies stay yours**,
+managed in the Grafana UI — provisioning a policy would make the whole policy tree
+read-only and hijack where alerts go, so this repo deliberately doesn't.
+
+```bash
+sudo mkdir -p /etc/grafana/provisioning/alerting && sudo install -m 644 $OBS/grafana/provisioning/alerting/rules.yaml /etc/grafana/provisioning/alerting/rules.yaml
+```
+
+```bash
+sudo systemctl restart grafana-server && sudo journalctl -u grafana-server -n 30 --no-pager | grep -i -E 'alert|provision|error'
+```
+
+Expect no provisioning errors. Then in the UI:
+
+- **Alerting → Alert rules** — both rules listed under *Nihongo No Michinori → Site*, state **Normal**.
+- **Alerting → Notification policies** — make sure the default policy points at your
+  contact point (or add a child route on the `severity` label: the 5xx rule is
+  `severity=critical`, the 4xx rule `severity=warning`). Then **Contact points → Test** to
+  confirm the message actually arrives.
+
+An email contact point also needs SMTP, which Grafana doesn't have by default. Add it to
+the root-only env file if you use one (a Telegram, Discord or webhook contact point needs
+none of this):
 
 ```bash
 sudo tee -a /etc/grafana/db.env > /dev/null <<'EOF'
-ALERT_EMAIL=you@example.com
 GF_SMTP_ENABLED=true
 GF_SMTP_HOST=smtp.resend.com:465
 GF_SMTP_USER=resend
@@ -436,19 +456,6 @@ GF_SMTP_FROM_NAME=Horus
 EOF
 ```
 
-```bash
-sudo mkdir -p /etc/grafana/provisioning/alerting && sudo install -m 644 $OBS/grafana/provisioning/alerting/*.yaml /etc/grafana/provisioning/alerting/
-```
-
-```bash
-sudo systemctl restart grafana-server && sudo journalctl -u grafana-server -n 30 --no-pager | grep -i -E 'alert|provision|error'
-```
-
-Expect no provisioning errors. Then check in the UI:
-
-- **Alerting → Alert rules** — both rules listed under *Nihongo No Michinori → Site*, state **Normal**.
-- **Alerting → Contact points** — one contact point, `email`, with your address. Press **Test** and confirm the message arrives.
-
 ### Prove it fires
 
 ```bash
@@ -456,9 +463,10 @@ for i in $(seq 1 60); do curl -s -o /dev/null https://nihongo-no-michinori.xerza
 ```
 
 That's 60 404s in a few seconds. Within about three minutes the 4xx rule should go to
-**Firing** and the email should arrive. It returns to Normal on its own once the two
-minutes pass with no more hits. (There's no safe way to fake a 5xx from outside, so trust
-the 4xx test for both — they're the same rule shape with a different threshold.)
+**Firing** and your contact point should get the notification. It returns to Normal on its
+own once two minutes pass with no more hits. (There's no safe way to fake a 5xx from
+outside, so trust the 4xx test for both — they're the same rule shape with a different
+threshold.)
 
 ### Tuning
 
@@ -467,8 +475,8 @@ look at what a normal 2 minutes actually contains, and edit the numbers in
 `rules.yaml` (the `params` under refId C), then reinstall and restart Grafana. Alerting at
 a level you routinely cross is worse than no alert, because you'll learn to ignore it.
 
-Because the notification policy is provisioned, Grafana's UI shows it as read-only —
-change it in `contact-points.yaml` and restart, not in the browser.
+Editing a provisioned rule in the browser doesn't stick: the file wins on every restart.
+Change `rules.yaml` in this repo, deploy, reinstall, restart.
 
 ## Picking up changes from this repo
 
@@ -486,7 +494,7 @@ bash /var/www/nihongo-no-michinori/deploy.sh && export OBS=/var/www/nihongo-no-m
 | Alloy config | `sudo install -m 644 $OBS/alloy/config.alloy /etc/alloy/config.alloy && sudo systemctl restart alloy` |
 | Loki config | `sudo install -m 644 $OBS/loki/config.yml /etc/loki/config.yml && sudo systemctl restart loki` |
 | `host-stats.sh` | `sudo install -m 755 $OBS/bin/host-stats.sh /usr/local/bin/host-stats.sh` |
-| Alert rules | `sudo install -m 644 $OBS/grafana/provisioning/alerting/*.yaml /etc/grafana/provisioning/alerting/ && sudo systemctl restart grafana-server` |
+| Alert rules | `sudo install -m 644 $OBS/grafana/provisioning/alerting/rules.yaml /etc/grafana/provisioning/alerting/rules.yaml && sudo systemctl restart grafana-server` |
 | App event logging | nothing — it ships with the deploy |
 
 Re-running the SQL is safe: it replaces the views and leaves the role and its password
@@ -526,7 +534,7 @@ Otherwise a Grafana restart brings back the file's version.
 | Symptom | Check | Usual cause |
 |---|---|---|
 | A service ignores the config you installed | `systemctl show -p ExecStart --value <unit>` | It was never restarted (apt started it at install), or its unit reads a different file |
-| Alerts never arrive | `sudo journalctl -u grafana-server \| grep -i smtp` | `ALERT_EMAIL` or the `GF_SMTP_*` lines missing from `/etc/grafana/db.env`; test with **Contact points → Test** |
+| Alerts never arrive | **Alerting → Contact points → Test** | No notification policy routes to your contact point, or (for email) the `GF_SMTP_*` lines are missing from `/etc/grafana/db.env` |
 | An alert fires all night | the **Logs & traffic** dashboard for that window | The threshold is below your normal traffic — raise it in `rules.yaml` |
 | `install: invalid user 'loki'` | `getent passwd loki` | That build doesn't create the user — use the `User=` from `systemctl show -p User --value loki` (empty means root) |
 | Grafana won't load | `sudo journalctl -u grafana-server -n 50` | Port 3001 taken, or a bad provisioning file |
