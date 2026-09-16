@@ -40,4 +40,9 @@ export type EntryPatch = Partial<Pick<PlanEntry, "date" | "skipped" | "done" | "
 /** What a new planner is built from: a preset, or a hand-picked list of lessons (may be empty). */
 export type PlannerSource = { presetId: string } | { lessonIds: string[] };
 
-export type NewPlanner = ScheduleSettings & { source: PlannerSource; name?: string | null };
+export type NewPlanner = ScheduleSettings & {
+  source: PlannerSource;
+  name?: string | null;
+  /** Replace the current planner. Without it, the server refuses (409) when one exists. */
+  replace: boolean;
+};

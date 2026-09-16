@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
-import { usePlan } from "@/context/PlanContext";
+import { PlannerExistsError, usePlan } from "@/context/PlanContext";
 import { ALL_WEEKDAYS, MAX_PER_DAY, buildSchedule, isISODate, todayISO } from "@/lib/schedule";
 import { formatDateLong } from "@/lib/dates";
-import type { PlannerSource, ScheduleSettings } from "@/lib/planTypes";
+import type { Plan, PlannerSource, ScheduleSettings } from "@/lib/planTypes";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/cn";
 import { plannerName } from "./plannerName";
+import { ReplacePlannerDialog } from "./ReplacePlannerDialog";
 
 const WEEKDAY_SHORT = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -32,7 +33,7 @@ type Props =
 
 export function PlanSettingsForm(props: Props) {
   const { t, lang } = useSettings();
-  const { settings, lessonEntries, today, saveSettings, createPlanner } = usePlan();
+  const { settings, entries, lessonEntries, today, saveSettings, createPlanner, reload } = usePlan();
   const editing = props.mode === "edit";
 
   const [form, setForm] = useState<ScheduleSettings>(() =>
@@ -43,6 +44,8 @@ export function PlanSettingsForm(props: Props) {
   const [name, setName] = useState(editing ? (settings?.name ?? "") : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Asking before the new planner replaces `current` (`elsewhere`: started in another tab or device). */
+  const [replacing, setReplacing] = useState<{ current: Plan; elsewhere: boolean } | null>(null);
 
   const valid = isISODate(form.startDate);
   const count =
@@ -80,20 +83,42 @@ export function PlanSettingsForm(props: Props) {
     ) {
       return;
     }
+    if (props.mode === "create" && settings) {
+      // One planner per learner — starting another replaces it, so ask first.
+      setReplacing({ current: { settings, entries }, elsewhere: false });
+      return;
+    }
+    await save(rebuild, false);
+  }
+
+  async function save(rebuild: boolean, replace: boolean) {
     setBusy(true);
     setError(null);
     try {
       if (props.mode === "create") {
-        await createPlanner({ ...form, name: name.trim() || null, source: props.source });
+        await createPlanner({ ...form, name: name.trim() || null, source: props.source, replace });
       } else {
         await saveSettings({ ...form, name: name.trim() || null }, rebuild);
       }
+      setReplacing(null);
       props.onDone?.();
-    } catch {
-      setError(t({ en: "Couldn't save — please try again.", id: "Gagal menyimpan — coba lagi." }));
+    } catch (e) {
+      if (e instanceof PlannerExistsError) {
+        setReplacing({ current: e.current, elsewhere: true });
+      } else {
+        setReplacing(null);
+        setError(t({ en: "Couldn't save — please try again.", id: "Gagal menyimpan — coba lagi." }));
+      }
     } finally {
       setBusy(false);
     }
+  }
+
+  function keepCurrentPlanner() {
+    const elsewhere = replacing?.elsewhere;
+    setReplacing(null);
+    // This page didn't know about that planner yet — load it so the learner sees it.
+    if (elsewhere) void reload();
   }
 
   return (
@@ -213,6 +238,23 @@ export function PlanSettingsForm(props: Props) {
             id: "“Simpan saja” membiarkan setiap materi di tanggalnya sekarang (hari belajar dan ritme dipakai saat materi ditambah, diurutkan ulang, atau digeser). “Susun ulang” mengatur ulang semua materi sesuai urutanmu dari tanggal mulai. Tugas pribadi dan materi yang dilewati tidak diubah.",
           })}
         </p>
+      )}
+
+      {props.mode === "create" && (
+        <ReplacePlannerDialog
+          current={replacing?.current ?? null}
+          elsewhere={replacing?.elsewhere ?? false}
+          newName={plannerName(
+            {
+              name: name.trim() || null,
+              presetId: "presetId" in props.source ? props.source.presetId : null,
+            },
+            t,
+          )}
+          busy={busy}
+          onConfirm={() => save(true, true)}
+          onCancel={keepCurrentPlanner}
+        />
       )}
     </div>
   );

@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { todayISO } from "@/lib/schedule";
 import type {
@@ -34,6 +34,9 @@ type PlanContextValue = {
   /** Local ISO date, known only after mount. */
   today: string | null;
   entryForLesson: (lessonId: string) => PlanEntry | undefined;
+  /** Fetch the planner again. */
+  reload: () => Promise<void>;
+  /** Throws PlannerExistsError when a planner exists and `replace` is false. */
   createPlanner: (planner: NewPlanner) => Promise<void>;
   saveSettings: (
     settings: ScheduleSettings & { name?: string | null },
@@ -53,6 +56,13 @@ type PlanContextValue = {
 const EMPTY_PLAN: Plan = { settings: null, entries: [] };
 
 const PlanContext = createContext<PlanContextValue | null>(null);
+
+/** The learner already has a planner this page didn't know about (started in another tab or device). */
+export class PlannerExistsError extends Error {
+  constructor(public current: Plan) {
+    super("planner exists");
+  }
+}
 
 export function isEntryDone(
   entry: PlanEntry,
@@ -137,7 +147,14 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createPlanner = useCallback(async (planner: NewPlanner) => {
-    setPlan(await api<Plan>("/api/plan", { method: "POST", body: planner }));
+    try {
+      setPlan(await api<Plan>("/api/plan", { method: "POST", body: planner }));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        throw new PlannerExistsError(await api<Plan>("/api/plan"));
+      }
+      throw e;
+    }
     setError(false);
   }, []);
 
@@ -240,6 +257,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       lessonEntries,
       today,
       entryForLesson: (lessonId) => byLesson.get(lessonId),
+      reload: refresh,
       createPlanner,
       saveSettings,
       updateEntry,
@@ -258,6 +276,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       lessonEntries,
       today,
       byLesson,
+      refresh,
       createPlanner,
       saveSettings,
       updateEntry,

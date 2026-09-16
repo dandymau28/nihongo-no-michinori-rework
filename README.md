@@ -22,7 +22,8 @@ N2 and N1 lessons are added to the same catalog later.
   - move any lesson to another date, one study day earlier/later, or to today;
   - add custom tasks with a note, tick them off, edit or delete them;
   - push everything unfinished forward in one click ("Resume from today");
-  - rebuild the schedule, or start a different planner (lesson progress is kept).
+  - rebuild the schedule, or start a different planner — it asks first, since the new one
+    replaces the current planner (lesson progress is kept).
 - **Progress per lesson** — shared by the planner and by opening a lesson on its own.
 - **Interactive exercises**: multiple choice, fill-in-the-blank, sentence building, timed
   conjugation streaks, flashcard decks, reading comprehension, and listening.

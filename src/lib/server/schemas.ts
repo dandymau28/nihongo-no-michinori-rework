@@ -42,6 +42,11 @@ export const newPlanner = z.object({
     z.object({ presetId: z.string().refine((id) => !!getPreset(id), "unknown preset") }),
     z.object({ lessonIds: z.array(lessonId).max(1000) }),
   ]),
+  /**
+   * true = replace the current planner; false = only start one if there is none.
+   * Omitted by clients from before this flag, which always replaced.
+   */
+  replace: z.boolean().optional(),
 });
 
 export const plannerSettings = z.object({

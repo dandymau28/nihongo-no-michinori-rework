@@ -2,6 +2,7 @@ import { getPreset, presetLessonIds } from "@/data/presets";
 import { prisma } from "@/lib/server/db";
 import {
   badRequest,
+  conflict,
   currentUserId,
   json,
   notFound,
@@ -19,8 +20,9 @@ export async function GET() {
 }
 
 /**
- * Start a planner from a preset or a list of lessons, replacing the current one
- * (its schedule and custom tasks). Lesson progress is kept — it belongs to the lessons.
+ * Start a planner from a preset or a list of lessons. With `replace`, it replaces the
+ * current one (its schedule and custom tasks); without it, an existing planner is a 409.
+ * Lesson progress is kept either way — it belongs to the lessons.
  */
 export async function POST(req: Request) {
   const userId = await currentUserId();
@@ -28,7 +30,14 @@ export async function POST(req: Request) {
   const parsed = newPlanner.safeParse(await readJson(req));
   if (!parsed.success) return badRequest("invalid planner");
 
-  const { source, startDate, studyDays, perDay } = parsed.data;
+  const { source, startDate, studyDays, perDay, replace } = parsed.data;
+  // One planner per learner, so replacing it must be deliberate — e.g. a tab that still
+  // shows "no planner" after one was started elsewhere. (`replace` omitted = a page from
+  // the previous release, open during a deploy; it always replaced.)
+  if (replace === false) {
+    const existing = await prisma.planSettings.findUnique({ where: { userId }, select: { userId: true } });
+    if (existing) return conflict("planner exists");
+  }
   const presetId = "presetId" in source ? source.presetId : null;
   const lessonIds =
     "presetId" in source ? presetLessonIds(getPreset(source.presetId)!) : [...new Set(source.lessonIds)];
