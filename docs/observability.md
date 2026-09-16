@@ -406,18 +406,27 @@ learner reporting "I never got the email" can be answered. To stop that, hash th
 
 ## Alerts
 
-Two rules ship with this repo, both watching the nginx access log over a 2-minute window,
-evaluated every minute:
+Three rules ship with this repo, all evaluated every minute:
 
-| Rule | Fires when | Severity |
-|---|---|---|
-| **Site is failing (5xx)** | more than 5 server errors in 2 minutes | critical, fires immediately |
-| **Lots of rejected requests (4xx)** | more than 50 rejections in 2 minutes, sustained for 2 minutes | warning |
+| Rule | Watches | Fires when | Severity |
+|---|---|---|---|
+| **Site is failing (5xx)** | nginx access log | more than 5 server errors in 2 minutes | critical, immediately |
+| **App is logging errors** | the app's journal | more than 5 error lines in 1 minute | critical, immediately |
+| **Lots of rejected requests (4xx)** | nginx access log | more than 50 rejections in 2 minutes, sustained for 2 minutes | warning |
 
-Both are set to **stay quiet when there are no logs at all** — a quiet night is not an
-outage. The 4xx rule counts bot probes for `/wp-admin` and the like, which is the usual
-cause; `rules.yaml` has a comment showing how to ignore 404s and alert only on rejections
-of real pages.
+All three **stay quiet when there are no logs at all** — a quiet night is not an outage.
+
+The two nginx rules catch what visitors saw; the app rule catches what threw inside the
+app, which includes failures that never reach a visitor at all — a confirmation email that
+couldn't be sent, or a database timeout in a background write. Between them, "the site is
+broken" and "the site works but something is wrong" are separate alerts.
+
+Two things about the app rule worth knowing: **one stack trace is several lines**, so a
+single unhandled exception can reach the threshold on its own (usually what you want), and
+it matches the word *error* anywhere in a line, so an event like `auth.email_failed`
+counts too. The 4xx rule mostly catches bot probes for `/wp-admin` and friends;
+`rules.yaml` has a comment showing how to ignore 404s and alert only on rejections of real
+pages.
 
 ### Turn them on
 
@@ -435,11 +444,11 @@ sudo systemctl restart grafana-server && sudo journalctl -u grafana-server -n 30
 
 Expect no provisioning errors. Then in the UI:
 
-- **Alerting → Alert rules** — both rules listed under *Nihongo No Michinori → Site*, state **Normal**.
+- **Alerting → Alert rules** — all three listed under *Nihongo No Michinori → Site*, state **Normal**.
 - **Alerting → Notification policies** — make sure the default policy points at your
-  contact point (or add a child route on the `severity` label: the 5xx rule is
-  `severity=critical`, the 4xx rule `severity=warning`). Then **Contact points → Test** to
-  confirm the message actually arrives.
+  contact point (or add a child route on the `severity` label: the 5xx and app-error rules
+  are `severity=critical`, the 4xx rule `severity=warning`). Then **Contact points → Test**
+  to confirm the message actually arrives.
 
 An email contact point also needs SMTP, which Grafana doesn't have by default. Add it to
 the root-only env file if you use one (a Telegram, Discord or webhook contact point needs
@@ -464,9 +473,19 @@ for i in $(seq 1 60); do curl -s -o /dev/null https://nihongo-no-michinori.xerza
 
 That's 60 404s in a few seconds. Within about three minutes the 4xx rule should go to
 **Firing** and your contact point should get the notification. It returns to Normal on its
-own once two minutes pass with no more hits. (There's no safe way to fake a 5xx from
-outside, so trust the 4xx test for both — they're the same rule shape with a different
-threshold.)
+own once two minutes pass with no more hits.
+
+The app-error rule can be tested the same way, by writing lines to the journal under a
+unit name the rule's `unit=~"nihongo-no-michinori.*"` matches:
+
+```bash
+sudo systemd-run --unit=nihongo-no-michinori-alerttest /bin/sh -c 'for i in $(seq 1 8); do echo "Error: synthetic alert test $i"; done'
+```
+
+Eight fake error lines, gone from the journal when retention expires, and the transient
+unit removes itself. Expect **Firing** within about two minutes, then Normal a minute
+later. (There's no safe way to fake a real 5xx from outside, but it's the same rule shape
+as the 4xx one.)
 
 ### Tuning
 

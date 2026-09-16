@@ -74,6 +74,71 @@ groups:
                 type: __expr__
                 uid: __expr__
 
+      - uid: michinori-app-errors
+        title: App is logging errors
+        condition: C
+        for: 0m
+        annotations:
+          summary: The app logged {{ $values.B }} error lines in a minute.
+          description: >-
+            Something is throwing inside the app, not just failing at the edge. Read them
+            with {job="journal", unit=~"nihongo-no-michinori.*"} |~ "(?i)(error|unhandled|exception)",
+            or open the "App log" panel on the "Logs & traffic" dashboard. Note one stack
+            trace is several lines, so a single exception can reach this threshold.
+        labels:
+          severity: critical
+        isPaused: false
+        noDataState: OK
+        execErrState: Error
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: michinori-loki
+            model:
+              refId: A
+              datasource:
+                type: loki
+                uid: michinori-loki
+              queryType: instant
+              # Backticks so the regex needs no escaping. Matches both the app's own
+              # event lines (evt: auth.email_failed) and raw Node stack traces.
+              expr: >-
+                sum(count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |~ `(?i)(error|unhandled|exception)` [1m]))
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 5
+              datasource:
+                type: __expr__
+                uid: __expr__
+
       - uid: michinori-4xx
         title: Lots of rejected requests (4xx)
         condition: C
