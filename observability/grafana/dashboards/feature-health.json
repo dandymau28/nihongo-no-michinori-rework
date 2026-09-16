@@ -1,0 +1,539 @@
+{
+  "uid": "michinori-feature-health",
+  "title": "Feature health",
+  "description": "Each feature's usage and learning outcome next to the technical health of the endpoints it depends on — the place to check when a product number moves.",
+  "tags": [
+    "michinori",
+    "product"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "5m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "By feature",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "description": "Questions answered and how many were right, per feature. Features are lesson types plus the four practice trainers.",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "feature",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__range]))",
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__range]))",
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range]))",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Usage by feature",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | feature != \"\" [$__auto]))",
+          "legendFormat": "{{feature}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Accuracy by feature",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "mean"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "axisSoftMin": 0,
+            "axisSoftMax": 1
+          },
+          "unit": "percentunit",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__auto])) / sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__auto]))",
+          "legendFormat": "{{feature}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Practice sessions finished",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 17
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"practice.session_completed\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Planners started",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 17
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Lessons added to planners",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 17
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.lessons_added\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Progress saves",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 17
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"progress.save\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "The endpoints these features depend on",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "description": "Request rate for the APIs behind lessons, planners and telemetry.",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | uri =~ \"/api/progress.*\" [$__auto]))",
+          "legendFormat": "/api/progress"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | uri =~ \"/api/plan.*\" [$__auto]))",
+          "legendFormat": "/api/plan"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | uri =~ \"/api/events.*\" [$__auto]))",
+          "legendFormat": "/api/events"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "…and how slow they are (p95)",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "description": "If a completion rate fell at the same time one of these rose, that is the investigation: product symptom, technical cause.",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "axisSoftMin": 0
+          },
+          "unit": "s",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | uri =~ \"/api/progress.*\" | unwrap duration [$__auto]) by (site)",
+          "legendFormat": "/api/progress"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "quantile_over_time(0.95, {job=\"nginx\", stream=\"access\", site=\"michinori\"} | json | __error__=\"\" | uri =~ \"/api/plan.*\" | unwrap duration [$__auto]) by (site)",
+          "legendFormat": "/api/plan"
+        }
+      ]
+    }
+  ]
+}

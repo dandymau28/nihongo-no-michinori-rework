@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useProgress } from "@/context/ProgressContext";
+import { getLesson } from "@/data/lessons";
+import { track } from "@/lib/telemetry";
 import { STR } from "@/lib/strings";
 import type { ExerciseGroup, Question } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
@@ -50,6 +52,14 @@ export function ExerciseSet({
 
   const prior = getProgress(lessonId).exercises.find((e) => e.setId === group.id);
 
+  // Telemetry: which lesson this set belongs to, and whether this run has begun.
+  const lesson = getLesson(lessonId);
+  const where = useMemo(
+    () => ({ feature: lesson?.type ?? "unknown", contentId: lessonId, level: lesson?.level }),
+    [lesson, lessonId],
+  );
+  const runStarted = useRef(false);
+
   const [index, setIndex] = useState(0);
   const [graded, setGraded] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
@@ -64,8 +74,13 @@ export function ExerciseSet({
           key={runKey}
           group={group}
           onFinish={(r) => {
-            if (r.total > 0)
+            if (r.total > 0) {
               recordExercise(lessonId, { setId: group.id, ...r, scored: false });
+              track("exercise.completed", {
+                ...where,
+                props: { setId: group.id, mode: "streak", correct: r.correct, total: r.total },
+              });
+            }
             setRunKey((k) => k + 1);
           }}
         />
@@ -80,6 +95,16 @@ export function ExerciseSet({
   function handleResult(correct: boolean) {
     setGraded(true);
     if (correct) setCorrectCount((c) => c + 1);
+    // The set counts as started at the first answer, not when it renders — every set on
+    // a lesson page mounts at once.
+    if (!runStarted.current) {
+      runStarted.current = true;
+      track("exercise.started", { ...where, props: { setId: group.id, questions: total } });
+    }
+    track("question.answered", {
+      ...where,
+      props: { setId: group.id, kind: q.kind, correct, position: index + 1 },
+    });
   }
 
   function advance() {
@@ -90,6 +115,10 @@ export function ExerciseSet({
         total,
         scored: true,
       });
+      track("exercise.completed", {
+        ...where,
+        props: { setId: group.id, mode: "list", correct: correctCount, total },
+      });
       setFinished(true);
     } else {
       setIndex((i) => i + 1);
@@ -98,6 +127,7 @@ export function ExerciseSet({
   }
 
   function restart() {
+    runStarted.current = false;
     setIndex(0);
     setGraded(false);
     setCorrectCount(0);

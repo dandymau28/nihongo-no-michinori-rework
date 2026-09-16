@@ -11,9 +11,11 @@
  * hash it here — every caller passes it through this one function.
  */
 type Value = string | number | boolean | null | undefined;
+/** `props` carries the event's own details; everything else stays flat for LogQL. */
+type Field = Value | Record<string, Value>;
 
-export function logEvent(evt: string, fields: Record<string, Value> = {}): void {
-  const line: Record<string, Value> = { evt };
+export function logEvent(evt: string, fields: Record<string, Field> = {}): void {
+  const line: Record<string, Field> = { evt };
   for (const [key, value] of Object.entries(fields)) {
     if (value !== undefined) line[key] = value;
   }

@@ -1,0 +1,633 @@
+{
+  "uid": "michinori-product",
+  "title": "Product & learning",
+  "description": "What learners actually do, guests included. Built from the app's own events; the numbers cover the dashboard's time range unless a panel says otherwise.",
+  "tags": [
+    "michinori",
+    "product"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "5m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active learners (24h)",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | anonId != \"\" [24h])))"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active learners (7d)",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | anonId != \"\" [7d])))"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active learners (30d)",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | anonId != \"\" [30d])))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Signed-in learners",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | userId != \"\" [$__range])))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Sessions",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"session.started\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Questions answered",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Learning activity",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__auto]))",
+          "legendFormat": "lessons viewed"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__auto]))",
+          "legendFormat": "lessons started"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__auto]))",
+          "legendFormat": "lessons completed"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto]))",
+          "legendFormat": "exercises completed"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Questions and accuracy",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__auto]))",
+          "legendFormat": "answered"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__auto]))",
+          "legendFormat": "correct"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Accuracy",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "description": "Share of answered questions that were right. A sudden fall usually means a content problem, not a learner problem.",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "axisSoftMin": 0,
+            "axisSoftMax": 1
+          },
+          "unit": "percentunit",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" | props_correct=\"true\" [$__auto])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"question.answered\" [$__auto]))",
+          "legendFormat": "accuracy"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Feature usage",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "description": "Events per feature: lesson types (grammar, listening…) and the four practice trainers.",
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum by (feature) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | feature != \"\" [$__range]))",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "New accounts and sign-ins",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "michinori-db"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "description": "From the database, so this covers all of history rather than the log retention window.",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "michinori-db"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day as time, signups as \"sign-ups\", confirmed as \"confirmed email\" from metrics.signups_daily where $__timeFilter(day) order by 1"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "michinori-db"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day as time, signins as \"sign-ins\" from metrics.signins_daily where $__timeFilter(day) order by 1"
+        }
+      ]
+    }
+  ]
+}

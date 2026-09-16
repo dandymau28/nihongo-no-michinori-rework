@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { track } from "@/lib/telemetry";
 import { LESSONS } from "@/data/lessons";
 import { PRESETS, presetLessonIds, type PlannerPreset } from "@/data/presets";
 import { useSettings } from "@/context/SettingsContext";
@@ -28,6 +29,11 @@ export function PlannerStart({
 }) {
   const { t } = useSettings();
   const [choice, setChoice] = useState<Choice | null>(null);
+
+  // The top of the planner funnel: seeing the choices, then picking one.
+  useEffect(() => {
+    track("planner.viewed", { feature: "planner", props: { readOnly, replacing } });
+  }, [readOnly, replacing]);
   const comingLevels = JLPT_LEVELS.filter((lv) => !LESSONS.some((l) => l.level === lv));
 
   if (choice && !readOnly) {
@@ -133,7 +139,17 @@ export function PlannerStart({
                     {t({ en: "Create an account to start", id: "Buat akun untuk mulai" })}
                   </ButtonLink>
                 ) : (
-                  <Button size="sm" onClick={() => setChoice({ kind: "preset", preset })}>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      track("planner.preset_chosen", {
+                        feature: "planner",
+                        contentId: preset.id,
+                        props: { lessons: count },
+                      });
+                      setChoice({ kind: "preset", preset });
+                    }}
+                  >
                     {t({ en: "Use this preset", id: "Pakai preset ini" })}
                   </Button>
                 )}
@@ -168,7 +184,14 @@ export function PlannerStart({
                 {t({ en: "Browse lessons", id: "Lihat materi" })}
               </ButtonLink>
             ) : (
-              <Button size="sm" variant="secondary" onClick={() => setChoice({ kind: "custom" })}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  track("planner.preset_chosen", { feature: "planner", contentId: "custom" });
+                  setChoice({ kind: "custom" });
+                }}
+              >
                 {t({ en: "Build my own", id: "Susun sendiri" })}
               </Button>
             )}

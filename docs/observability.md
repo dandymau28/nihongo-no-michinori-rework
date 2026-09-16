@@ -11,14 +11,17 @@ learning?** (usage). Reached at `https://horus.xerzack.web.id`.
 | Usage data | the app's own PostgreSQL, through a read-only role and aggregate views |
 | Host vitals | `host-stats.timer`, one JSON line a minute into the journal |
 
-Four dashboards come with it:
+Seven dashboards come with it — four engineering, three product:
 
 | Dashboard | Answers |
 |---|---|
-| **Site usage** | How many learners, what they study, which lessons stall — from the database |
-| **Learner flows** | Every step through the app: sign-up, confirmation email, planner, lessons, practice — from the app's event log |
 | **Logs & traffic** | Requests, failures, response times, the app log — from nginx and the journal |
 | **Server health** | CPU, memory, swap, disk and memory per service — from `host-stats` |
+| **Site usage** | How many learners, what they study, which lessons stall — from the database |
+| **Learner flows** | Raw event stream: sign-up, emails, planner, lessons, practice, one learner at a time |
+| **Product & learning** | Active learners (guests included), sessions, questions answered, accuracy, feature usage |
+| **Learning funnel** | Where learners drop out, step by step, with conversion and drop-out trends |
+| **Feature health** | Each feature's usage and accuracy beside the latency of the endpoints it depends on |
 
 Nothing here is exposed to the internet except Grafana's own login page. Config files live
 in [`observability/`](../observability) in this repo; this page is the install order.
@@ -455,6 +458,60 @@ enough to follow one person's activity. The **Site usage** dashboard stays aggre
 these logs are the place where individual activity is visible, by design, so that a
 learner reporting "I never got the email" can be answered. To stop that, hash the id in
 `logEvent` — every caller goes through that one function.
+
+### Product events from the browser
+
+The server only sees what it's asked to save, which for a learning site is the least
+interesting part: it never sees a question being answered, a set abandoned halfway, or
+anything a guest does. `src/lib/telemetry.ts` fills that in — it batches small events and
+posts them to `/api/events`, which logs them beside the server's own.
+
+**Guests count.** A learner who never signs in is identified by `anonId`, a random id in
+localStorage — not a cookie, never shared with anyone — and `sessionId` groups one sitting,
+ending after 30 minutes of inactivity. When the learner is signed in, the server adds
+`userId` **from the session**; a browser can't claim to be someone else.
+
+| Event | Fired when | Carries |
+|---|---|---|
+| `app.opened` | first page of a visit | referring host only |
+| `session.started` | first event of a new sitting | — |
+| `page.viewed` | every route | `props.route`, with ids collapsed (`/lessons/{id}`) |
+| `lesson.viewed` | a lesson page opens | feature, contentId, level |
+| `lesson.started` | its progress turns "in progress" | same |
+| `lesson.completed` | its progress turns "done" | same |
+| `exercise.started` | the first answer in a set | setId, question count |
+| `question.answered` | every graded answer | setId, kind, correct, position |
+| `exercise.completed` | the last question of a set | setId, mode, correct, total |
+| `practice.session_started` / `practice.session_completed` | a trainer run | trainer, answered, correct, best streak |
+| `planner.viewed` / `planner.preset_chosen` | the planner start screen | presetId or `custom` |
+| `signup.started` / `signin.started` | the auth form is submitted | method (email/google) |
+
+Every event has the same shape, and the field names match the server's:
+
+```json
+{"evt":"question.answered","eventId":"…","at":"2026-09-16T10:37:35.478Z",
+ "sessionId":"…","anonId":"…","userId":"…","feature":"grammar",
+ "contentId":"n5-particles","level":"N5","requestId":"…",
+ "props":{"setId":"particles:cloze","kind":"cloze","correct":true,"position":1}}
+```
+
+**What must never go in:** anything a learner typed. No answers, no notes, no titles, no
+email addresses. `/api/events` enforces it — props values are capped at 120 characters,
+nested objects are rejected, and unknown keys are dropped — but the rule matters more than
+the validator: ids and numbers only.
+
+The endpoint is open to guests, so it's rate limited to 3000 events a minute per server
+process; beyond that events are dropped (and one `telemetry.throttled` line is logged)
+rather than filling the disk.
+
+In LogQL, `| json` flattens `props`, so the fields are `props_correct`, `props_setId`:
+
+```
+sum by (feature) (count_over_time({job="journal", unit=~"nihongo-no-michinori.*"} |= "\"evt\":" | json | evt="question.answered" | props_correct="true" [1h]))
+```
+
+Set `NEXT_PUBLIC_TELEMETRY=off` to turn the browser side off completely (useful in
+development); the server's own events are unaffected.
 
 ## Alerts
 

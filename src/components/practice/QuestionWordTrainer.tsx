@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/Button";
 import { QuestionWordTrainerSetup } from "./QuestionWordTrainerSetup";
 import { PracticeStatsPanel } from "./PracticeStatsPanel";
 import { StreakCelebration } from "./StreakCelebration";
+import { usePracticeTelemetry } from "./usePracticeTelemetry";
 
 type Phase = "setup" | "playing" | "summary";
 
@@ -49,6 +50,8 @@ export function QuestionWordTrainer() {
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState<QWDrill[]>([]);
   const [celebration, setCelebration] = useState<{ milestone: number; id: number } | null>(null);
+
+  usePracticeTelemetry("qwords", phase, { seen, correct, best });
 
   const total = sessionLength(settings.mode);
   const item = queue[pos % Math.max(queue.length, 1)];

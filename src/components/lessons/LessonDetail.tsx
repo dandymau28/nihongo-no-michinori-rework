@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LESSONS, getLesson } from "@/data/lessons";
 import { useSettings } from "@/context/SettingsContext";
 import { usePlan } from "@/context/PlanContext";
+import { useProgress } from "@/context/ProgressContext";
+import { track } from "@/lib/telemetry";
 import { getContent } from "@/content/registry";
 import { STR } from "@/lib/strings";
 import { TYPE_LABEL } from "@/lib/labels";
@@ -24,6 +26,33 @@ export function LessonDetail({ lessonId }: { lessonId: string }) {
   const [addFailed, setAddFailed] = useState(false);
 
   const lesson = getLesson(lessonId);
+
+  // Telemetry: opening the lesson, and its status crossing into "in progress" or "done".
+  // Those three points are the middle of the learning funnel, and they work for guests.
+  const { getProgress } = useProgress();
+  const status = lesson ? getProgress(lesson.id).status : null;
+  const lastStatus = useRef<string | null>(null);
+  const place = lesson
+    ? { feature: lesson.type, contentId: lesson.id, level: lesson.level }
+    : null;
+
+  useEffect(() => {
+    if (place) track("lesson.viewed", place);
+    // The catalog is static, so this fires once per lesson opened.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id]);
+
+  useEffect(() => {
+    if (!place || status == null) return;
+    const before = lastStatus.current;
+    lastStatus.current = status;
+    // Skip the first reading — that's the status the lesson already had when it opened.
+    if (before === null || before === status) return;
+    if (status === "partial") track("lesson.started", place);
+    if (status === "done") track("lesson.completed", place);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id, status]);
+
   if (!lesson) return null;
 
   const entry = entryForLesson(lesson.id);

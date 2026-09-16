@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { track } from "@/lib/telemetry";
 import { useAuth } from "@/lib/useAuth";
 import { useSettings } from "@/context/SettingsContext";
 import { Card } from "@/components/ui/Card";
@@ -59,6 +60,12 @@ export function AuthForm({
     setBusy(true);
     setError(null);
     const cleanEmail = email.trim();
+    // The top of the acquisition funnel. The address itself never goes to telemetry —
+    // the server's own auth.signup / auth.signin events complete the picture.
+    track(isRegister ? "signup.started" : "signin.started", {
+      feature: "auth",
+      props: { method: "email" },
+    });
 
     if (isRegister) {
       const res = await authClient.signUp.email({
@@ -100,6 +107,10 @@ export function AuthForm({
   async function withGoogle() {
     setBusy(true);
     setError(null);
+    track(isRegister ? "signup.started" : "signin.started", {
+      feature: "auth",
+      props: { method: "google" },
+    });
     const res = await authClient.signIn.social({ provider: "google", callbackURL: next });
     if (res?.error) {
       setError(res.error.message || fallbackError);

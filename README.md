@@ -62,6 +62,7 @@ Environment variables (see `.env.example`):
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional; Google button hidden when empty. Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | optional; sends password-reset and email-confirmation links. While empty, the links are printed to the server log; in production, password reset and email confirmation stay off until SMTP is set |
 | `EMAIL_REPLY_TO` | optional; where replies to those emails go (e.g. your own inbox, when the sending domain has no mailbox) |
+| `NEXT_PUBLIC_TELEMETRY` | optional; `off` stops the browser sending product events (lesson opened, question answered, …). See [`docs/observability.md`](docs/observability.md) |
 
 Other scripts:
 
@@ -118,6 +119,7 @@ src/
       plan/shift           push unfinished entries forward by N study days
       progress[/lesson]    GET all · PUT one lesson · POST import · DELETE reset
       practice/[key]       trainer stats
+      events               product events from the browser (guests included)
       health               release id + database check (deploys, uptime monitors)
   context/
     SettingsContext.tsx    lang / theme / furigana / romaji (localStorage, per device)

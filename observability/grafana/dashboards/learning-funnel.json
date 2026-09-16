@@ -1,0 +1,729 @@
+{
+  "uid": "michinori-funnel",
+  "title": "Learning funnel",
+  "description": "Where learners drop out. Steps count distinct learners (guests by anonId); conversions count events, so they survive a learner repeating a step.",
+  "tags": [
+    "michinori",
+    "product"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "5m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "Lesson funnel — learners reaching each step",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" | anonId != \"\" [$__range])))",
+          "legendFormat": "1 · opened a lesson"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" | anonId != \"\" [$__range])))",
+          "legendFormat": "2 · started it"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" | anonId != \"\" [$__range])))",
+          "legendFormat": "3 · started an exercise"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" | anonId != \"\" [$__range])))",
+          "legendFormat": "4 · finished an exercise"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" | anonId != \"\" [$__range])))",
+          "legendFormat": "5 · finished the lesson"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "bargauge",
+      "title": "Acquisition funnel — learners reaching each step",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "description": "app.opened and signup.started come from the browser; the rest are server events, counted by user id.",
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"app.opened\" | anonId != \"\" [$__range])))",
+          "legendFormat": "1 · opened the site"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (anonId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" | anonId != \"\" [$__range])))",
+          "legendFormat": "2 · started signing up"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" | userId != \"\" [$__range])))",
+          "legendFormat": "3 · account created"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signin\" | userId != \"\" [$__range])))",
+          "legendFormat": "4 · signed in"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (userId) (count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" | userId != \"\" [$__range])))",
+          "legendFormat": "5 · started a planner"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Opened → started",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 9
+      },
+      "description": "Of the lessons opened, how many got any work done in them.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Started → exercise",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 9
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.started\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Exercise finished",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 9
+      },
+      "description": "Learners who answer the first question and reach the last one. The clearest signal that a set is too long or too hard.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Lesson finished",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 9
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Sign-up started → account",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 9
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"signup.started\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Account → planner",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 9
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "instant",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" [$__range])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"auth.signup\" [$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Funnel steps over time",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "axisSoftMin": 0
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.viewed\" [$__auto]))",
+          "legendFormat": "opened a lesson"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto]))",
+          "legendFormat": "started an exercise"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto]))",
+          "legendFormat": "finished an exercise"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" [$__auto]))",
+          "legendFormat": "finished the lesson"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Drop-out after starting an exercise",
+      "datasource": {
+        "type": "loki",
+        "uid": "michinori-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "description": "1 − (exercises finished ÷ exercises started). Rising means learners are giving up mid-set — check the same window on Logs & traffic before blaming the content.",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "axisSoftMin": 0,
+            "axisSoftMax": 1
+          },
+          "unit": "percentunit",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "michinori-loki"
+          },
+          "queryType": "range",
+          "expr": "1 - (sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.completed\" [$__auto])) / sum(count_over_time({job=\"journal\", unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"exercise.started\" [$__auto])))",
+          "legendFormat": "drop-out"
+        }
+      ]
+    }
+  ]
+}

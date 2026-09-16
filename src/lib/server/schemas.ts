@@ -49,6 +49,36 @@ export const newPlanner = z.object({
   replace: z.boolean().optional(),
 });
 
+/**
+ * Product events from the browser. Deliberately strict: unknown keys are dropped, values
+ * are capped, and there is no free-text field — nothing a learner typed can reach the
+ * logs through here. `userId` is not accepted; the server takes it from the session.
+ */
+const eventProps = z.record(
+  z.string().max(40),
+  z.union([z.string().max(120), z.number(), z.boolean(), z.null()]),
+);
+
+export const eventBatch = z.object({
+  events: z
+    .array(
+      z.object({
+        // "lesson.completed", "question.answered" — matches the server-side events.
+        evt: z.string().max(60).regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/, "expected name.like_this"),
+        eventId: z.string().min(8).max(64),
+        at: z.iso.datetime(),
+        sessionId: z.string().min(8).max(64),
+        anonId: z.string().min(8).max(64),
+        feature: z.string().max(40).optional(),
+        contentId: z.string().max(100).optional(),
+        level: z.enum(["N5", "N4", "N3", "N2", "N1"]).optional(),
+        props: eventProps.optional(),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
+
 export const plannerSettings = z.object({
   ...schedule,
   name: plannerName,

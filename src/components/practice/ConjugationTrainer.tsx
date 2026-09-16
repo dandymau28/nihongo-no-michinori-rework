@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { ConjugationSettingsPanel } from "./ConjugationSettingsPanel";
 import { ConjugationStatsPanel } from "./ConjugationStatsPanel";
 import { StreakCelebration } from "./StreakCelebration";
+import { usePracticeTelemetry } from "./usePracticeTelemetry";
 
 type Phase = "setup" | "playing" | "summary";
 
@@ -62,6 +63,8 @@ export function ConjugationTrainer() {
   const [wrongItems, setWrongItems] = useState<PracticeItem[]>([]);
   const [celebration, setCelebration] = useState<{ milestone: number; id: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePracticeTelemetry("conj", phase, { seen, correct, best });
 
   const total = sessionLength(settings.mode);
   const item = queue[pos % Math.max(queue.length, 1)];

@@ -6,6 +6,7 @@ import { ProgressProvider } from "@/context/ProgressContext";
 import { PlanProvider } from "@/context/PlanContext";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { TelemetryBoot } from "@/components/layout/TelemetryBoot";
 
 const notoSansJp = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <SettingsProvider>
           <ProgressProvider>
             <PlanProvider>
+              <TelemetryBoot />
               <div className="flex min-h-screen flex-col">
                 <Header />
                 <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
