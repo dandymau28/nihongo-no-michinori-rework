@@ -49,7 +49,68 @@
           "unit": "short",
           "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "1 · opened a lesson"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "2 · started it"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "3 · started an exercise"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "4 · finished an exercise"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "E"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "5 · finished the lesson"
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -102,22 +163,6 @@
           "expr": "count(sum by (anonId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"lesson.completed\" | anonId != \"\" [$__range])))",
           "legendFormat": "5 · finished the lesson"
         }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "Value #A": "1 · opened a lesson",
-              "Value #B": "2 · started it",
-              "Value #C": "3 · started an exercise",
-              "Value #D": "4 · finished an exercise",
-              "Value #E": "5 · finished the lesson"
-            },
-            "excludeByName": {},
-            "indexByName": {}
-          }
-        }
       ]
     },
     {
@@ -155,7 +200,68 @@
           "unit": "short",
           "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "1 · opened the site"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "2 · started signing up"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "3 · account created"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "4 · signed in"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "E"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "5 · started a planner"
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -207,22 +313,6 @@
           "queryType": "instant",
           "expr": "count(sum by (userId) (count_over_time({unit=~\"nihongo-no-michinori.*\"} |= \"\\\"evt\\\":\" | json | evt=\"planner.start\" | userId != \"\" [$__range])))",
           "legendFormat": "5 · started a planner"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "Value #A": "1 · opened the site",
-              "Value #B": "2 · started signing up",
-              "Value #C": "3 · account created",
-              "Value #D": "4 · signed in",
-              "Value #E": "5 · started a planner"
-            },
-            "excludeByName": {},
-            "indexByName": {}
-          }
         }
       ]
     },
