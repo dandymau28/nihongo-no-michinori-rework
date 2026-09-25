@@ -451,7 +451,12 @@ The events are `auth.signup`, `auth.signin`, `auth.email_requested`, `auth.email
 `email.sent`, `email.skipped`, `planner.start`, `planner.settings`,
 `planner.lessons_added`, `planner.reorder`, `planner.task_added`,
 `planner.entry_updated`, `planner.entry_removed`, `planner.shift`, `progress.save`,
-`progress.import`, `progress.reset` and `practice.save`.
+`progress.import`, `progress.reset`, `practice.save`, `deck.created`, `deck.updated`,
+`deck.deleted`, `deck.link_rotated`, `deck.opened` and `deck.copied`.
+
+`deck.opened` is the one to watch for the flashcard feature: it carries `deckId`, whether
+the reader was a `guest`, and `newSession`, which is what the owner's visit counter
+increments on. The owner's own opens are not logged as visits.
 
 Each line carries the learner's `userId` — a random id, never an email or a name, but
 enough to follow one person's activity. The **Site usage** dashboard stays aggregate-only;
@@ -485,6 +490,11 @@ ending after 30 minutes of inactivity. When the learner is signed in, the server
 | `practice.session_started` / `practice.session_completed` | a trainer run | trainer, answered, correct, best streak |
 | `planner.viewed` / `planner.preset_chosen` | the planner start screen | presetId or `custom` |
 | `signup.started` / `signin.started` | the auth form is submitted | method (email/google) |
+| `deck.studied` | a shared deck is opened for study | contentId = deck id |
+| `deck.card_flipped` | a flashcard is turned over | contentId = deck id, level |
+
+Building, editing and copying a deck are logged by the server instead — the browser would
+only repeat what the route already knows, and both streams land in the same journal.
 
 Every event has the same shape, and the field names match the server's:
 

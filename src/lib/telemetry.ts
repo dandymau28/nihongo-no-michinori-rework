@@ -151,6 +151,9 @@ const ROUTES: [RegExp, string][] = [
   [/^\/lessons\/[^/]+$/, "/lessons/{id}"],
   [/^\/lesson\/[^/]+$/, "/lesson/{slug}"],
   [/^\/day\/[^/]+$/, "/day/{day}"],
+  [/^\/decks\/[^/]+\/edit$/, "/decks/{id}/edit"],
+  [/^\/decks\/[^/]+$/, "/decks/{id}"],
+  [/^\/d\/[^/]+$/, "/d/{token}"],
 ];
 
 /** Collapse ids out of a path, so "route" stays a low-cardinality label. */

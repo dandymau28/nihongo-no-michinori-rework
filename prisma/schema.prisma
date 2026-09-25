@@ -32,6 +32,8 @@ model User {
   lessonProgress LessonProgress[]
   dayProgress    DayProgress[]
   practiceStats  PracticeStats[]
+  kanjiDecks     KanjiDeck[]
+  kanjiDeckUses  KanjiDeckUse[]
 
   @@map("user")
 }
@@ -182,4 +184,66 @@ model PracticeStats {
 
   @@id([userId, key])
   @@map("practice_stats")
+}
+
+// ---------------------------------------------------------------------------
+// Kanji flashcard decks (learner-built, shared by link)
+// ---------------------------------------------------------------------------
+
+/// A set of kanji a learner picked out of the catalog (src/data/kanji.ts) to drill.
+/// Anyone signed in who has the link can study it; only the owner sees who has.
+model KanjiDeck {
+  id          String  @id @default(cuid())
+  userId      String  @map("user_id")
+  title       String
+  description String?
+  /// The whole of the share URL, /d/<token>. Random, so the link is the permission;
+  /// rotating it is how a learner takes a deck back out of circulation.
+  shareToken  String  @unique @map("share_token")
+  /// Opens of the share page by anyone but the owner, signed in or not, counted once
+  /// per browser session. Deliberately separate from the unique-learner count below.
+  visits      Int     @default(0)
+  /// The deck this one was copied from. A plain id, not a relation: a copy outlives
+  /// the original, and its use counts are its own.
+  copiedFromId String? @map("copied_from_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards KanjiDeckCard[]
+  uses  KanjiDeckUse[]
+
+  @@index([userId, updatedAt])
+  @@map("kanji_deck")
+}
+
+/// One kanji in a deck. The character is the key, so a deck can't hold it twice;
+/// `position` is the order the owner arranged them in.
+model KanjiDeckCard {
+  deckId   String    @map("deck_id")
+  char     String
+  position Int
+  deck     KanjiDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@id([deckId, char])
+  @@index([deckId, position])
+  @@map("kanji_deck_card")
+}
+
+/// One row per signed-in learner who has studied a deck — the unique-learner count and
+/// the names its owner sees. Guests leave no row; they only add to `visits`.
+model KanjiDeckUse {
+  deckId      String   @map("deck_id")
+  userId      String   @map("user_id")
+  /// Separate sessions this learner opened it in.
+  sessions    Int      @default(1)
+  firstUsedAt DateTime @default(now()) @map("first_used_at")
+  lastUsedAt  DateTime @default(now()) @map("last_used_at")
+
+  deck KanjiDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([deckId, userId])
+  @@index([deckId, lastUsedAt])
+  @@map("kanji_deck_use")
 }

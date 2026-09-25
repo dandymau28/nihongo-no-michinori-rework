@@ -161,3 +161,52 @@ ruby rt {
     opacity: 1 !important;
   }
 }
+
+/* Kanji flashcard — the card turns over instead of swapping its text */
+.kf-scene {
+  perspective: 1200px;
+}
+
+.kf-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 480ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.kf-card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* The front sits in the flow and sets the card's height; the back is laid over it,
+   turned away from the viewer until the card rotates. */
+.kf-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.kf-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kf-card,
+  .kf-card.is-flipped {
+    transition: none;
+    transform: none;
+  }
+  /* With nothing rotating, the two faces would sit on top of each other — show one. */
+  .kf-back {
+    transform: none;
+  }
+  .kf-face {
+    backface-visibility: visible;
+  }
+  .kf-card:not(.is-flipped) .kf-back {
+    display: none;
+  }
+  .kf-card.is-flipped .kf-front {
+    visibility: hidden;
+  }
+}

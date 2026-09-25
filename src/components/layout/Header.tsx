@@ -53,6 +53,7 @@ export function Header() {
           <NavLink href="/planner" label={t(STR.nav_planner)} />
           <NavLink href="/lessons" label={t(STR.nav_lessons)} />
           <NavLink href="/practice" label={t(STR.nav_practice)} />
+          <NavLink href="/decks" label={t(STR.nav_decks)} />
         </nav>
 
         <AccountMenu />

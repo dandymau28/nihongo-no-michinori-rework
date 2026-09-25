@@ -53,6 +53,42 @@ export function AboutView() {
             : "Rencananya sendiri berasal dari planner belajar \"Dandy Recipe N4\"."}
         </p>
       </Card>
+      <Card className="space-y-2 text-sm leading-relaxed text-fg/90">
+        <h2 className="font-semibold">
+          {en ? "Kanji data and credits" : "Data kanji dan kredit"}
+        </h2>
+        <p>
+          {en
+            ? "The kanji you pick from when building a flashcard deck — the characters, their on'yomi and kun'yomi readings, their meanings and stroke counts — come from KANJIDIC, which is the property of the Electronic Dictionary Research and Development Group and is used in conformance with the Group's licence."
+            : "Kanji yang bisa kamu pilih saat menyusun dek flashcard — karakternya, cara baca on'yomi dan kun'yomi, arti, serta jumlah coretannya — berasal dari KANJIDIC, milik Electronic Dictionary Research and Development Group dan dipakai sesuai lisensi mereka."}
+        </p>
+        <p>
+          {en
+            ? "Which JLPT level each kanji belongs to follows Jonathan Waller's JLPT Resources lists. Meanings are KANJIDIC's own and are in English."
+            : "Pembagian level JLPT tiap kanji mengikuti daftar JLPT Resources dari Jonathan Waller. Artinya berasal dari KANJIDIC dan masih berbahasa Inggris."}
+        </p>
+        <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+          <a className="underline hover:text-fg" href="https://www.edrdg.org/" target="_blank" rel="noopener noreferrer">
+            edrdg.org
+          </a>
+          <a
+            className="underline hover:text-fg"
+            href="https://www.edrdg.org/edrdg/licence.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {en ? "EDRDG licence (CC BY-SA 4.0)" : "Lisensi EDRDG (CC BY-SA 4.0)"}
+          </a>
+          <a
+            className="underline hover:text-fg"
+            href="https://www.tanos.co.uk/jlpt/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            JLPT Resources
+          </a>
+        </p>
+      </Card>
     </div>
   );
 }

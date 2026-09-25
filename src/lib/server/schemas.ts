@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getKanji } from "@/data/kanji";
 import { getLesson } from "@/data/lessons";
 import { getPreset } from "@/data/presets";
 import { MAX_PER_DAY, isISODate } from "@/lib/schedule";
@@ -120,4 +121,19 @@ export const PRACTICE_KEYS = ["conj", "particles", "kanji", "qwords"] as const;
 
 export const practiceBody = z.object({
   data: z.record(z.string(), z.unknown()),
+});
+
+// --- Kanji flashcard decks -------------------------------------------------
+
+/// Only characters that are actually in the catalog — the study card has nothing to
+/// show for anything else, and this keeps arbitrary text out of the deck tables.
+const deckKanji = z.string().refine((c) => !!getKanji(c), "unknown kanji");
+
+export const MAX_DECK_CARDS = 200;
+
+export const deckBody = z.object({
+  title: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(500).nullable().optional(),
+  /// In the order the owner arranged them; duplicates are dropped by the route.
+  chars: z.array(deckKanji).min(1).max(MAX_DECK_CARDS),
 });

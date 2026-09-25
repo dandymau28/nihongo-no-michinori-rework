@@ -27,6 +27,12 @@ const TOOLS = [
     desc: STR.practice_kanji_desc,
   },
   {
+    href: "/decks",
+    emoji: "🃏",
+    name: STR.decks_title,
+    desc: STR.decks_intro,
+  },
+  {
     href: "/practice/questions",
     emoji: "❓",
     name: STR.practice_qw_name,

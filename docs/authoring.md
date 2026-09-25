@@ -110,6 +110,45 @@ conjugationGroup(
 )
 ```
 
+## The kanji catalog and flashcard decks
+
+`/decks` lets a learner pick kanji out of a catalog, arrange them into a deck and share it
+by link. The catalog itself is `src/data/kanji.ts` — a **generated** file holding all 2,211
+JLPT kanji (N5 79, N4 166, N3 367, N2 367, N1 1,232) with up to three on'yomi, three
+kun'yomi and three English meanings each, plus the stroke count.
+
+Read it through its three functions, never by touching `PACKED`:
+
+```ts
+allKanji()               // the whole catalog, parsed on first call and cached
+kanjiAtLevel("N5")       // one JLPT level
+getKanji("日")             // one character, or undefined
+```
+
+**Refreshing it.** The data comes from KANJIDIC (via the `kanji-data` npm package, which is
+not a runtime dependency — it is only used to generate the file) and the JLPT levels from
+Jonathan Waller's lists. To regenerate, install `kanji-data` in a scratch directory and run
+a script that reads `data/kanji-meta.json`, keeps the rows with a `jlpt` field, sorts by
+level then newspaper frequency, caps each list at three entries and writes one
+`char|on|kun|meanings|jlpt|strokes` line per kanji. Fields are separated by `|` and list
+items by `;` — **not** by commas, because a meaning can contain one ("case (law, grammar)").
+
+**Licence.** KANJIDIC is the property of the EDRDG and is used under CC BY-SA 4.0. The
+credit on the About page (`src/components/settings/AboutView.tsx`) is a condition of that
+licence — if the catalog stays, so does the credit.
+
+**Meanings are English only.** KANJIDIC has no Indonesian, so the back of a card shows
+English regardless of the interface language, and says so in a note beneath the card.
+
+### The deck tables
+
+`kanji_deck` (owner, title, share token, visit counter), `kanji_deck_card` (one row per
+kanji, ordered) and `kanji_deck_use` (one row per signed-in learner who studied it). The
+share token is the only permission: anyone with the link who is signed in can study the
+deck, and rotating the token retires the old link. The owner's own opens are never counted.
+Visits are deduplicated per browser session client-side, so treat that number as an
+estimate rather than an audit trail.
+
 ## The conjugation trainer
 
 `/practice/conjugation` is a standalone tool, not part of any lesson. To extend it:

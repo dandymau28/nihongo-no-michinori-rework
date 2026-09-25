@@ -12,8 +12,121 @@ export const STR = {
   nav_planner: { en: "Planner", id: "Planner" },
   nav_lessons: { en: "Lessons", id: "Materi" },
   nav_practice: { en: "Practice", id: "Latihan" },
+  nav_decks: { en: "Flashcards", id: "Flashcard" },
   nav_settings: { en: "Settings", id: "Pengaturan" },
   nav_about: { en: "About", id: "Tentang" },
+
+  // Kanji flashcard decks
+  decks_title: { en: "Kanji Flashcards", id: "Flashcard Kanji" },
+  decks_intro: {
+    en: "Pick any kanji from N5 to N1, build a deck, and share the link with anyone studying with you.",
+    id: "Pilih kanji mana pun dari N5 sampai N1, susun satu dek, lalu bagikan tautannya ke teman belajarmu.",
+  },
+  decks_new: { en: "New deck", id: "Dek baru" },
+  decks_empty: {
+    en: "No decks yet. Build one from the kanji you want to drill.",
+    id: "Belum ada dek. Susun satu dari kanji yang ingin kamu latih.",
+  },
+  decks_sign_in: {
+    en: "Sign in to build and share kanji decks.",
+    id: "Masuk dulu untuk menyusun dan membagikan dek kanji.",
+  },
+  decks_card_count: { en: "kanji", id: "kanji" },
+  decks_visits: { en: "Visits", id: "Kunjungan" },
+  decks_learners: { en: "Learners", id: "Pemakai" },
+  decks_copied_from: { en: "Copied from", id: "Disalin dari" },
+
+  // Builder
+  deck_build_title: { en: "Build a deck", id: "Susun dek" },
+  deck_edit_title: { en: "Edit deck", id: "Ubah dek" },
+  deck_name_label: { en: "Deck name", id: "Nama dek" },
+  deck_name_placeholder: { en: "e.g. Kanji I keep forgetting", id: "mis. Kanji yang sering lupa" },
+  deck_desc_label: { en: "Description (optional)", id: "Deskripsi (opsional)" },
+  deck_desc_placeholder: {
+    en: "What is this deck for?",
+    id: "Dek ini untuk apa?",
+  },
+  deck_pick_label: { en: "Pick the kanji", id: "Pilih kanjinya" },
+  deck_search_placeholder: { en: "Search a kanji, reading or meaning", id: "Cari kanji, cara baca, atau arti" },
+  deck_selected: { en: "Selected", id: "Dipilih" },
+  deck_clear: { en: "Clear all", id: "Kosongkan" },
+  deck_no_match: { en: "Nothing matches that search.", id: "Tidak ada yang cocok dengan pencarian itu." },
+  deck_save: { en: "Save deck", id: "Simpan dek" },
+  deck_saving: { en: "Saving…", id: "Menyimpan…" },
+  deck_needs_name: { en: "Give the deck a name.", id: "Beri nama untuk dek ini." },
+  deck_needs_cards: { en: "Pick at least one kanji.", id: "Pilih minimal satu kanji." },
+  deck_limit: {
+    en: "A deck holds up to 200 kanji.",
+    id: "Satu dek memuat paling banyak 200 kanji.",
+  },
+  deck_showing: { en: "Showing", id: "Menampilkan" },
+  deck_all_levels: { en: "All", id: "Semua" },
+
+  // Study
+  deck_study: { en: "Study", id: "Belajar" },
+  deck_flip_hint: { en: "Tap the card to turn it over", id: "Ketuk kartu untuk membaliknya" },
+  deck_prev: { en: "Back", id: "Sebelumnya" },
+  deck_next: { en: "Next", id: "Berikutnya" },
+  deck_shuffle: { en: "Shuffle", id: "Acak" },
+  deck_restart: { en: "Start again", id: "Mulai lagi" },
+  deck_finished: { en: "You reached the end of the deck.", id: "Kamu sudah sampai akhir dek." },
+  deck_on_reading: { en: "On", id: "On" },
+  deck_kun_reading: { en: "Kun", id: "Kun" },
+  deck_strokes: { en: "strokes", id: "coretan" },
+  deck_meaning_en_note: {
+    en: "Meanings come from KANJIDIC and are in English.",
+    id: "Arti berasal dari KANJIDIC dan masih berbahasa Inggris.",
+  },
+
+  // Sharing
+  deck_share_title: { en: "Share link", id: "Tautan berbagi" },
+  deck_share_hint: {
+    en: "Anyone with this link can study the deck once they sign in.",
+    id: "Siapa pun yang punya tautan ini bisa belajar dari dek ini setelah masuk.",
+  },
+  deck_copy_link: { en: "Copy link", id: "Salin tautan" },
+  deck_copied: { en: "Copied", id: "Tersalin" },
+  deck_new_link: { en: "New link", id: "Tautan baru" },
+  deck_new_link_confirm_title: { en: "Replace the share link?", id: "Ganti tautan berbagi?" },
+  deck_new_link_confirm_body: {
+    en: "The current link stops working straight away. Anyone still using it will need the new one.",
+    id: "Tautan yang sekarang langsung berhenti bekerja. Siapa pun yang masih memakainya perlu tautan yang baru.",
+  },
+  deck_copy_to_mine: { en: "Copy to my decks", id: "Salin ke dek saya" },
+  deck_copying: { en: "Copying…", id: "Menyalin…" },
+  deck_copy_note: {
+    en: "A copy is yours to edit, with its own link and its own counts.",
+    id: "Salinan jadi milikmu untuk diubah, dengan tautan dan hitungannya sendiri.",
+  },
+  deck_shared_by: { en: "Shared by", id: "Dibagikan oleh" },
+  deck_login_to_study: {
+    en: "Sign in to study this deck.",
+    id: "Masuk dulu untuk belajar dari dek ini.",
+  },
+  deck_not_found: {
+    en: "This link doesn't lead to a deck. It may have been replaced or the deck deleted.",
+    id: "Tautan ini tidak menuju dek mana pun. Mungkin sudah diganti atau deknya dihapus.",
+  },
+
+  // Owner stats
+  deck_stats_title: { en: "Who has used it", id: "Siapa yang sudah memakainya" },
+  deck_stats_empty: {
+    en: "Nobody has opened the link yet.",
+    id: "Belum ada yang membuka tautannya.",
+  },
+  deck_stats_guests_note: {
+    en: "Visits count everyone who opens the link, once per browser session. Learners are the signed-in people below. Your own visits are not counted.",
+    id: "Kunjungan menghitung semua yang membuka tautan, sekali tiap sesi peramban. Pemakai adalah orang yang sudah masuk di bawah ini. Kunjunganmu sendiri tidak dihitung.",
+  },
+  deck_stats_sessions: { en: "sessions", id: "sesi" },
+  deck_last_used: { en: "Last", id: "Terakhir" },
+  deck_edit: { en: "Edit", id: "Ubah" },
+  deck_delete: { en: "Delete deck", id: "Hapus dek" },
+  deck_delete_confirm_title: { en: "Delete this deck?", id: "Hapus dek ini?" },
+  deck_delete_confirm_body: {
+    en: "The deck, its share link and its visit counts go with it. Copies other people made stay theirs.",
+    id: "Dek, tautan berbagi, dan hitungan kunjungannya ikut terhapus. Salinan milik orang lain tetap jadi milik mereka.",
+  },
 
   // Practice hub
   practice_title: { en: "Practice Tools", id: "Alat Latihan" },
