@@ -74,8 +74,8 @@ export const STR = {
   deck_kun_reading: { en: "Kun", id: "Kun" },
   deck_strokes: { en: "strokes", id: "coretan" },
   deck_meaning_en_note: {
-    en: "Meanings come from KANJIDIC and are in English.",
-    id: "Arti berasal dari KANJIDIC dan masih berbahasa Inggris.",
+    en: "Readings and meanings come from KANJIDIC.",
+    id: "Cara baca dan arti berasal dari KANJIDIC; terjemahan Indonesianya dibuat untuk situs ini.",
   },
 
   // Sharing

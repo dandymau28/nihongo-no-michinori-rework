@@ -3,7 +3,7 @@
 import { useSettings } from "@/context/SettingsContext";
 import { STR } from "@/lib/strings";
 import { cn } from "@/lib/cn";
-import type { KanjiChar } from "@/data/kanji";
+import { meaningsIn, type KanjiChar } from "@/data/kanji";
 
 /**
  * One flashcard. The kanji is on the front; the card turns over to the readings and
@@ -19,7 +19,8 @@ export function KanjiFlipCard({
   flipped: boolean;
   onFlip: () => void;
 }) {
-  const { t } = useSettings();
+  const { t, lang } = useSettings();
+  const meanings = meaningsIn(kanji, lang);
 
   return (
     <div className="kf-scene">
@@ -29,7 +30,7 @@ export function KanjiFlipCard({
         aria-pressed={flipped}
         aria-label={
           flipped
-            ? `${kanji.char} — ${kanji.meanings.join(", ")}`
+            ? `${kanji.char} — ${meanings.join(", ")}`
             : `${kanji.char} — ${t(STR.deck_flip_hint)}`
         }
         className={cn(
@@ -59,7 +60,7 @@ export function KanjiFlipCard({
               </div>
             )}
           </dl>
-          <p className="text-base font-medium">{kanji.meanings.join(", ")}</p>
+          <p className="text-base font-medium">{meanings.join(", ")}</p>
           <p className="text-xs text-muted">
             {kanji.level} · {kanji.strokes} {t(STR.deck_strokes)}
           </p>

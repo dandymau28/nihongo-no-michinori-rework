@@ -64,8 +64,8 @@ export function AboutView() {
         </p>
         <p>
           {en
-            ? "Which JLPT level each kanji belongs to follows Jonathan Waller's JLPT Resources lists. Meanings are KANJIDIC's own and are in English."
-            : "Pembagian level JLPT tiap kanji mengikuti daftar JLPT Resources dari Jonathan Waller. Artinya berasal dari KANJIDIC dan masih berbahasa Inggris."}
+            ? "Which JLPT level each kanji belongs to follows Jonathan Waller's JLPT Resources lists. The English meanings are KANJIDIC's own; the Indonesian ones are this site's translation of them, and are covered by the same licence."
+            : "Pembagian level JLPT tiap kanji mengikuti daftar JLPT Resources dari Jonathan Waller. Arti bahasa Inggrisnya berasal dari KANJIDIC; arti bahasa Indonesianya adalah terjemahan yang dibuat situs ini, dan tercakup lisensi yang sama."}
         </p>
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
           <a className="underline hover:text-fg" href="https://www.edrdg.org/" target="_blank" rel="noopener noreferrer">

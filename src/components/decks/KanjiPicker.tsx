@@ -7,16 +7,19 @@ import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { JLPT_LEVELS, type JlptLevel } from "@/lib/types";
-import { allKanji, getKanji, type KanjiChar } from "@/data/kanji";
+import { allKanji, getKanji, meaningsIn, type KanjiChar } from "@/data/kanji";
 
 /** N1 alone is over 1,200 characters; past this the grid is slower than it is useful. */
 const MAX_SHOWN = 400;
 
+// Searches both languages whichever one the interface is in, so "kucing" and "cat"
+// both find 猫 and nobody has to guess which wording the catalog used.
 function matches(k: KanjiChar, needle: string): boolean {
   if (k.char === needle) return true;
   const lower = needle.toLowerCase();
   return (
     k.meanings.some((m) => m.toLowerCase().includes(lower)) ||
+    k.meaningsId.some((m) => m.toLowerCase().includes(lower)) ||
     k.on.some((r) => r.includes(needle)) ||
     k.kun.some((r) => r.includes(needle))
   );
@@ -35,7 +38,7 @@ export function KanjiPicker({
   onChange: (chars: string[]) => void;
   max: number;
 }) {
-  const { t } = useSettings();
+  const { t, lang } = useSettings();
   const [level, setLevel] = useState<JlptLevel | "all">("N5");
   const [search, setSearch] = useState("");
   // Typing stays responsive while the grid catches up behind it.
@@ -79,7 +82,7 @@ export function KanjiPicker({
                 key={char}
                 type="button"
                 onClick={() => toggle(char)}
-                title={getKanji(char)?.meanings.join(", ")}
+                title={(() => { const k = getKanji(char); return k && meaningsIn(k, lang).join(", "); })()}
                 aria-label={`${char} — ${t(STR.deck_clear)}`}
                 className="font-jp grid size-9 place-items-center rounded-lg bg-primary text-lg text-primary-fg transition-opacity hover:opacity-80"
               >
@@ -124,7 +127,7 @@ export function KanjiPicker({
                   onClick={() => toggle(k.char)}
                   aria-pressed={on}
                   disabled={!on && full}
-                  title={`${k.level} · ${k.meanings.join(", ")}`}
+                  title={`${k.level} · ${meaningsIn(k, lang).join(", ")}`}
                   className={cn(
                     "font-jp grid aspect-square place-items-center rounded-lg border text-lg transition-colors",
                     on

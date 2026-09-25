@@ -117,28 +117,41 @@ by link. The catalog itself is `src/data/kanji.ts` — a **generated** file hold
 JLPT kanji (N5 79, N4 166, N3 367, N2 367, N1 1,232) with up to three on'yomi, three
 kun'yomi and three English meanings each, plus the stroke count.
 
-Read it through its three functions, never by touching `PACKED`:
+Read it through its functions, never by touching `PACKED`:
 
 ```ts
 allKanji()               // the whole catalog, parsed on first call and cached
 kanjiAtLevel("N5")       // one JLPT level
-getKanji("日")             // one character, or undefined
+getKanji("X")            // one character, or undefined
+meaningsIn(k, lang)      // that kanji's meanings in the reader's language
 ```
 
 **Refreshing it.** The data comes from KANJIDIC (via the `kanji-data` npm package, which is
-not a runtime dependency — it is only used to generate the file) and the JLPT levels from
-Jonathan Waller's lists. To regenerate, install `kanji-data` in a scratch directory and run
-a script that reads `data/kanji-meta.json`, keeps the rows with a `jlpt` field, sorts by
-level then newspaper frequency, caps each list at three entries and writes one
-`char|on|kun|meanings|jlpt|strokes` line per kanji. Fields are separated by `|` and list
-items by `;` — **not** by commas, because a meaning can contain one ("case (law, grammar)").
+**not** a runtime dependency — it only feeds the generator) and the JLPT levels from
+Jonathan Waller's lists. Install the package in a scratch directory and point the generator
+at it:
 
-**Licence.** KANJIDIC is the property of the EDRDG and is used under CC BY-SA 4.0. The
-credit on the About page (`src/components/settings/AboutView.tsx`) is a condition of that
-licence — if the catalog stays, so does the credit.
+```bash
+mkdir /tmp/kanji && cd /tmp/kanji && npm i kanji-data
+node scripts/kanji/build-catalog.mjs /tmp/kanji/node_modules/kanji-data/data/kanji-meta.json
+```
 
-**Meanings are English only.** KANJIDIC has no Indonesian, so the back of a card shows
-English regardless of the interface language, and says so in a note beneath the card.
+Each line is `char|on|kun|meanings|jlpt|strokes|meaningsId`. Fields are separated by `|`
+and list items by `;` — **not** by commas, because a meaning can contain one
+("case (law, grammar)"); using a comma split eight entries down the middle.
+
+**Indonesian meanings.** KANJIDIC is English-only, so `scripts/kanji/gloss-id.tsv` holds
+this project's translation: one `english|indonesian` line for each of the 4,018 distinct
+glosses in the catalog. Translating the vocabulary once rather than per kanji keeps the
+same English word rendered the same way everywhere, and makes a wrong choice a one-line
+fix — edit the line, rerun the generator. The generator **fails** if a gloss has no
+Indonesian, so refreshing the catalog can't quietly leave holes. `meaningsIn()` falls back
+to English for anything missing.
+
+**Licence.** KANJIDIC is the property of the EDRDG and is used under CC BY-SA 4.0; the
+Indonesian glosses are a translation of it and carry the same licence. The credit on the
+About page (`src/components/settings/AboutView.tsx`) is a condition of that licence — if
+the catalog stays, so does the credit.
 
 ### The deck tables
 
